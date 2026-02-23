@@ -1,300 +1,1042 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>职场模拟器：从实习生到诸天万界总裁</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-font-family:Arial;
-overflow:hidden;
-}
-#gameInfo{
-position:absolute;
-top:20px;
-width:90%;
-max-width:900px;
-display:flex;
-justify-content:space-between;
-background:rgba(255,255,255,0.15);
-padding:14px 20px;
-border-radius:18px;
-backdrop-filter:blur(10px);
-color:#e0f7fa;
-font-weight:bold;
-}
-canvas{
-border-radius:15px;
-background:rgba(255,255,255,0.05);
-box-shadow:0 15px 35px rgba(0,0,0,0.5);
-}
-#dialogBox{
-position:absolute;
-bottom:40px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,0.75);
-color:#e0f7fa;
-padding:14px 20px;
-border-radius:20px;
-display:none;
-max-width:80%;
-text-align:center;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>职场模拟器：从实习生到诸天万界总裁</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #gameInfo {
+      position: absolute;
+      top: 20px;
+      width: 90%;
+      max-width: 900px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 14px 22px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #e0f7fa;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+
+    #gameCanvas {
+      border: 2px solid rgba(173, 216, 230, 0.5);
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      touch-action: none;
+    }
+
+    /* 对话框 */
+    #dialogBox {
+      position: absolute;
+      bottom: 38px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      color: #e0f7fa;
+      padding: 14px 22px;
+      border-radius: 20px;
+      font-size: 16px;
+      max-width: min(900px, 78%);
+      text-align: center;
+      display: none;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(0, 200, 255, 0.35);
+      border: 1px solid rgba(255,255,255,0.16);
+      line-height: 1.45;
+      z-index: 50;
+    }
+
+    #gameOverPanel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 50, 0.9);
+      padding: 40px;
+      border-radius: 25px;
+      text-align: center;
+      display: none;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      z-index: 100;
+      min-width: 360px;
+    }
+
+    #gameOverPanel h2 {
+      color: #e0f7fa;
+      font-size: 28px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
+      line-height: 1.25;
+    }
+
+    #gameOverPanel .subtitle {
+      color: rgba(224, 247, 250, 0.8);
+      font-size: 14px;
+      margin-bottom: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    #gameOverPanel p {
+      color: #bbdefb;
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    #restartBtn {
+      margin-top: 22px;
+      padding: 14px 38px;
+      font-size: 16px;
+      background: linear-gradient(45deg, #00c9ff, #92fe9d);
+      color: #0a1929;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0, 201, 255, 0.4);
+    }
+
+    #restartBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 201, 255, 0.6);
+    }
+  </style>
 </head>
+
 <body>
+  <div id="gameInfo">
+    <div>剩余寿命: <span id="daysLeft">21346</span> 天</div>
+    <div>生命值(HP): <span id="hp">100</span></div>
+    <div>难度: <span id="difficulty">1</span></div>
+    <div>金币积分: <span id="coinScore">0</span></div>
+  </div>
 
-<div id="gameInfo">
-<div>剩余寿命: <span id="daysLeft">21346</span></div>
-<div>HP: <span id="hp">100</span></div>
-<div>难度: <span id="difficulty">1</span></div>
-<div>金币: <span id="coinScore">0</span></div>
-</div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="dialogBox"></div>
 
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-<div id="dialogBox"></div>
+  <div id="gameOverPanel">
+    <h2>本轮历练结束</h2>
+    <div class="subtitle">Corporate Ascension Simulator — From Intern to Multiverse CEO</div>
+    <p>最终得分: <span id="finalScore">0</span></p>
+    <p>金币积分: <span id="finalCoins">0</span></p>
+    <p>存活时长: <span id="finalSeconds">0</span> 秒</p>
+    <button id="restartBtn">重新开始</button>
+  </div>
 
-<script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-const dialogBox=document.getElementById("dialogBox");
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameOverPanel = document.getElementById('gameOverPanel');
+    const restartBtn = document.getElementById('restartBtn');
+    const dialogBox = document.getElementById('dialogBox');
 
-let daysLeft=21346;
-let hp=100;
-let score=0;
-let coinScore=0;
-let difficulty=1;
-let secondsSurvived=0;
-let lastTick=performance.now();
+    // =========================
+    // 你要的关键改动（总览）
+    // 1) 右下角奶瓶“产线”不断出现/消失（不飘上升）
+    // 2) 敌人行为多样：追/游走/远离主角
+    // 3) 小牛表情更明显 & 可爱变化
+    // 4) 金币奖励指数级增长
+    // 5) 寿命指数级流失：前期慢，后期越来越快（沉浸职场时光飞逝）
+    // 6) 游戏更休闲：整体扣血更少，更不容易死
+    // 7) 台词数组换成你给的新版本
+    // =========================
 
-let player={
-x:400,y:300,size:30,
-targetX:400,targetY:300,
-speed:4,
-mood:"calm"
-};
+    // ====== 核心资源 ======
+    const INITIAL_DAYS = 21346;
+    const MAX_HP = 100;
 
-let enemies=[];
-let milkBottles=[];
+    // 更休闲：伤害降低
+    const SMALL_DAMAGE = 3;
+    const BOSS_DAMAGE  = 7;
 
-const SMALL_DAMAGE=3;     // 更简单
-const BOSS_DAMAGE=8;
+    // 恢复保持“爽感”
+    const SMALL_HEAL = 8;
+    const BOSS_HEAL  = 20;
 
-function coinReward(d){
-return Math.floor(Math.pow(1.12,d));
-}
+    // 金币指数增长参数
+    // 每次击杀得到的金币 = base * growthFactor^(stage)（再乘boss倍率）
+    const COIN_GROWTH_BASE = 1;      // 起步
+    const COIN_GROWTH_FACTOR = 1.12; // 增长速度（越大越离谱）
+    const BOSS_COIN_MULT = 5;
 
-function daysDecay(sec){
-return Math.min(0.15*Math.pow(1.015,sec),40);
-}
+    // 寿命指数流失（每秒减少的“天数”会随时间增长）
+    // daysDecayPerSec = BASE * (1 + t / T)^POWER
+    const DAYS_DECAY_BASE = 0.25; // 初期很慢（每秒0.25天）
+    const DAYS_DECAY_T = 45;      // 变快的时间尺度（秒）
+    const DAYS_DECAY_POWER = 1.55;
 
-/* ================= 奶瓶传送带 ================= */
+    // 敌人多样行为比例
+    // chase: 追主角; wander: 随机游走; flee: 远离主角
+    const ENEMY_BEHAVIOR = {
+      chase: 0.45,
+      wander: 0.35,
+      flee: 0.20
+    };
 
-function spawnMilk(){
-milkBottles.push({
-x:canvas.width+20,
-y:canvas.height-40,
-size:16
-});
-}
+    // 敌人刷新（休闲一点：不会太密）
+    const SPAWN_RATE_BASE = 0.010;   // 基础概率
+    const SPAWN_RATE_CAP  = 0.060;   // 上限
 
-function updateMilk(){
-milkBottles.forEach(m=>m.x-=1.5);
-milkBottles=milkBottles.filter(m=>m.x>-20);
-}
+    let player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      size: 30,
+      speed: 5,
+      targetX: canvas.width / 2,
+      targetY: canvas.height / 2,
 
-function drawMilk(){
-milkBottles.forEach(m=>{
-ctx.fillStyle="#ffffff";
-ctx.fillRect(m.x-6,m.y-12,12,24);
-ctx.fillStyle="#87CEFA";
-ctx.fillRect(m.x-4,m.y-10,8,14);
-});
-}
+      // 表情/状态
+      mood: "calm",        // calm | tired | critical | happy | smug
+      happyUntil: 0,
+      blinkUntil: 0,
+      nextBlinkAt: 0,
+      wagUntil: 0
+    };
 
-/* ================= 台词 ================= */
+    let enemies = [];
+    let particles = [];
+    let coinParticles = [];   // 视觉金币粒子（飘散）
+    let floatTexts = [];      // 浮动文字
 
-const earlyLines=[
-"第一天上班……",
-"为什么空气这么压抑？",
-"我是不是选错专业了？",
-"再坚持一下……也许明年会涨薪。",
-"今天又要加班吗？",
-"困死了，乌乌。",
-"好想回家。",
-"只有我不会吗？",
-"大家都会，我也学学吧。",
-"好累……但不敢停。",
-"先活下来再说。",
-"我开始收集变量。",
-"我今天帮刘姐做了她的活！嘿嘿。",
-"今天不加班，好开心。",
-"怎么又改需求？",
-"我只是个实习生啊……",
-"同事会拍马屁，升职好快。",
-"会议像黑洞：吞噬时间，吐出KPI。"
-];
+    let daysLeft = INITIAL_DAYS; // 只会减少
+    let hp = MAX_HP;             // 可恢复
+    let score = 0;
+    let coinScore = 0;
+    let difficulty = 1;
+    let gameRunning = true;
 
-const midLines=[
-"原来权力，是结构。",
-"想回家。",
-"我燃尽了……",
-"马年快乐",
-"为什么抢我的功劳？",
-"原来不是我不行，是游戏有问题。",
-"我不再焦虑，我开始计算。",
-"资源流向强者。",
-"八嘎呀路！",
-"小猫咪！嘬嘬嘬",
-"实习生！嘬嘬嘬",
-"王总，这个方案这样做更好。",
-"我开始收集变量。",
-"呵呵。",
-"耐心，是我的武器。",
-"当我不再解释，我就开始赢。"
-];
+    // 计时
+    let lastFrame = performance.now();
+    let secondsSurvived = 0;
 
-const lateLines=[
-"五年前，我在底层挨耳光；五年后，总经理为我擦皮鞋——这一巴掌，利息十亿。",
-"哈哈哈哈哈哈哈哈哈哈哈哈！",
-"抽中了年会特等奖：总裁体验卡（永久）。",
-"【恭喜宿主完成十万次摸鱼签到，奖励：整个集团控股权】",
-"带薪拉屎的我，拉出一座商业帝国。",
-"这栋楼太小，本座的目标是收购因果律。",
-"本座之言，便是群公告；本座之怒，便是服务器崩溃！",
-"我即天道，我即规则，我即职场本身！",
-"签到一百年，我成了职场天道。",
-"天若阻我，我便不出门；地若拦我，我便收购这地！",
-"我有一剑，可斩星辰；我有一键，可让全楼断电！",
-"被裁员那天，我绑定了职场神豪系统。"
-];
+    // ====== 奶瓶“产线”（右下角）======
+    // 机制：固定位置一排奶瓶，不上升。不断加入；超过最大数量就从另一端移除。
+    const milkLine = {
+      max: 12,
+      intervalMs: 450, // 出现频率：越小越“勤奋挤奶”
+      lastAdd: 0,
+      // 右下角基准
+      padRight: 22,
+      padBottom: 18,
+      bottleW: 18,
+      bottleH: 26,
+      gap: 6,
+      items: [] // 仅存数量
+    };
 
-let lastDialog=0;
+    function updateMilkLine(now) {
+      if (now - milkLine.lastAdd >= milkLine.intervalMs) {
+        milkLine.lastAdd = now;
+        // 从“左端加入”，从“右端消失”（形成流动）
+        milkLine.items.unshift({ t: now });
+        if (milkLine.items.length > milkLine.max) {
+          milkLine.items.pop();
+        }
+      }
+    }
 
-function showLine(){
-if(performance.now()-lastDialog<7000)return;
-let line;
-if(secondsSurvived<60) line=earlyLines[Math.floor(Math.random()*earlyLines.length)];
-else if(secondsSurvived<180) line=midLines[Math.floor(Math.random()*midLines.length)];
-else line=lateLines[Math.floor(Math.random()*lateLines.length)];
-dialogBox.innerText=line;
-dialogBox.style.display="block";
-setTimeout(()=>dialogBox.style.display="none",3000);
-lastDialog=performance.now();
-}
+    function drawMilkBottle(x, y, w, h, alpha=1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
 
-/* ================= 敌人 ================= */
+      // 瓶身
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(150,220,255,0.65)";
+      ctx.lineWidth = 2;
 
-function spawnEnemy(){
-let type=Math.random();
-enemies.push({
-x:Math.random()*800,
-y:-40,
-size:25,
-speed:2+Math.random(),
-behavior:type<0.5?"seek":type<0.75?"wander":"avoid"
-});
-}
+      // 圆角瓶身
+      const r = 5;
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.lineTo(x+w-r, y);
+      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+      ctx.lineTo(x+w, y+h-r);
+      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h);
+      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r);
+      ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
-function updateEnemies(){
-enemies.forEach(e=>{
-if(e.behavior==="seek"){
-let dx=player.x-e.x;
-let dy=player.y-e.y;
-let d=Math.sqrt(dx*dx+dy*dy)||1;
-e.x+=dx/d*e.speed;
-e.y+=dy/d*e.speed;
-}
-if(e.behavior==="wander"){
-e.x+=(Math.random()-0.5)*2;
-e.y+=e.speed;
-}
-if(e.behavior==="avoid"){
-let dx=e.x-player.x;
-let dy=e.y-player.y;
-let d=Math.sqrt(dx*dx+dy*dy)||1;
-e.x+=dx/d*e.speed;
-e.y+=dy/d*e.speed;
-}
-if(Math.hypot(player.x-e.x,player.y-e.y)<player.size+e.size){
-hp-=SMALL_DAMAGE;
-}
-});
-}
+      // 瓶颈
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.beginPath();
+      ctx.roundRect(x+w*0.30, y-6, w*0.40, 10, 3);
+      ctx.fill();
+      ctx.stroke();
 
-/* ================= 玩家 ================= */
+      // 小高光
+      ctx.fillStyle = "rgba(0,200,255,0.20)";
+      ctx.beginPath();
+      ctx.roundRect(x+w*0.16, y+h*0.18, w*0.18, h*0.55, 4);
+      ctx.fill();
 
-function drawPlayer(){
-ctx.fillStyle="#fff";
-ctx.beginPath();
-ctx.arc(player.x,player.y,player.size,0,Math.PI*2);
-ctx.fill();
-ctx.fillStyle="#000";
-ctx.beginPath();
-ctx.arc(player.x-8,player.y-8,3,0,Math.PI*2);
-ctx.arc(player.x+8,player.y-8,3,0,Math.PI*2);
-ctx.fill();
-ctx.beginPath();
-ctx.arc(player.x,player.y+4,6,0,Math.PI);
-ctx.stroke();
-}
+      ctx.restore();
+    }
 
-/* ================= 主循环 ================= */
+    function drawMilkLine(now) {
+      // 右下角定位
+      const totalW = milkLine.max * (milkLine.bottleW + milkLine.gap) - milkLine.gap;
+      const startX = canvas.width - milkLine.padRight - totalW;
+      const y = canvas.height - milkLine.padBottom - milkLine.bottleH;
 
-function update(){
-let now=performance.now();
-if(now-lastTick>1000){
-secondsSurvived++;
-daysLeft-=daysDecay(secondsSurvived);
-lastTick=now;
-}
-difficulty=Math.floor(score/100)+1;
-updateEnemies();
-updateMilk();
-if(Math.random()<0.7)spawnMilk();
-if(Math.random()<0.03*difficulty)spawnEnemy();
-showLine();
-document.getElementById("daysLeft").innerText=Math.floor(daysLeft);
-document.getElementById("hp").innerText=hp;
-document.getElementById("difficulty").innerText=difficulty;
-document.getElementById("coinScore").innerText=coinScore;
-if(daysLeft<=0||hp<=0)location.reload();
-}
+      for (let i = 0; i < milkLine.items.length; i++) {
+        const x = startX + i * (milkLine.bottleW + milkLine.gap);
 
-function draw(){
-ctx.fillStyle="rgba(0,0,0,0.2)";
-ctx.fillRect(0,0,800,600);
-drawMilk();
-drawPlayer();
-enemies.forEach(e=>{
-ctx.fillStyle="#8B4513";
-ctx.beginPath();
-ctx.arc(e.x,e.y,e.size,0,Math.PI*2);
-ctx.fill();
-});
-}
+        // 让“新出现的”更亮，老的更淡（消失感）
+        const age = (now - milkLine.items[i].t);
+        const alpha = Math.max(0.25, 1 - age / 2800);
 
-function loop(){
-update();
-draw();
-requestAnimationFrame(loop);
-}
+        drawMilkBottle(x, y, milkLine.bottleW, milkLine.bottleH, alpha);
+      }
+    }
 
-canvas.addEventListener("mousemove",e=>{
-let rect=canvas.getBoundingClientRect();
-player.targetX=e.clientX-rect.left;
-player.targetY=e.clientY-rect.top;
-player.x=player.targetX;
-player.y=player.targetY;
-});
+    // ====== 台词系统（你提供的新版）======
+    const earlyLines = [
+      "第一天上班……",
+      "为什么空气这么压抑？",
+      "我是不是选错专业了？",
+      "再坚持一下……也许明年会涨薪。",
+      "今天又要加班吗？",
+      "困死了，乌乌。",
+      "好想回家。",
+      "只有我不会吗？",
+      "大家都会，我也学学吧。",
+      "好累……但不敢停。",
+      "先活下来再说。",
+      "我开始收集变量。",
+      "我今天帮刘姐做了她的活！嘿嘿。",
+      "今天不加班，好开心。",
+      "怎么又改需求？",
+      "我只是个实习生啊……",
+      "同事会拍马屁，升职好快。",
+      "会议像黑洞：吞噬时间，吐出KPI。"
+    ];
 
-loop();
-</script>
+    const midLines = [
+      "原来权力，是结构。",
+      "想回家。",
+      "我燃尽了……",
+      "马年快乐",
+      "为什么抢我的功劳？",
+      "原来不是我不行，是游戏有问题。",
+      "我不再焦虑，我开始计算。",
+      "资源流向强者。",
+      "八嘎呀路！",
+      "小猫咪！嘬嘬嘬",
+      "实习生！嘬嘬嘬",
+      "王总，这个方案这样做更好。",
+      "我开始收集变量。",
+      "呵呵。",
+      "耐心，是我的武器。",
+      "当我不再解释，我就开始赢。"
+    ];
+
+    const lateLines = [
+      "五年前，我在底层挨耳光；五年后，总经理为我擦皮鞋——这一巴掌，利息十亿。",
+      "哈哈哈哈哈哈哈哈哈哈哈哈！",
+      "抽中了年会特等奖：总裁体验卡（永久）。",
+      "【恭喜宿主完成十万次摸鱼签到，奖励：整个集团控股权】",
+      "带薪拉屎的我，拉出一座商业帝国。",
+      "这栋楼太小，本座的目标是收购因果律。",
+      "本座之言，便是群公告；本座之怒，便是服务器崩溃！",
+      "我即天道，我即规则，我即职场本身！",
+      "签到一百年，我成了职场天道。",
+      "天若阻我，我便不出门；地若拦我，我便收购这地！",
+      "我有一剑，可斩星辰；我有一键，可让全楼断电！",
+      "被裁员那天，我绑定了职场神豪系统。"
+    ];
+
+    // 对话频率
+    let lastDialogTime = 0;
+    const DIALOG_MIN_INTERVAL_MS = 6500;
+    const DIALOG_SHOW_MS = 2600;
+    let dialogHideTimer = null;
+
+    function showDialog(text) {
+      if (dialogHideTimer) clearTimeout(dialogHideTimer);
+      dialogBox.textContent = text;
+      dialogBox.style.display = "block";
+      dialogHideTimer = setTimeout(() => {
+        dialogBox.style.display = "none";
+      }, DIALOG_SHOW_MS);
+    }
+
+    function randomLine(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function updateDialog(now) {
+      if (now - lastDialogTime < DIALOG_MIN_INTERVAL_MS) return;
+
+      // 早期更频繁，后期更“天道发言”一些
+      const chance = secondsSurvived < 60 ? 0.75 : (secondsSurvived < 180 ? 0.60 : 0.45);
+      if (Math.random() > chance) return;
+
+      if (secondsSurvived < 70) showDialog(randomLine(earlyLines));
+      else if (secondsSurvived < 210) showDialog(randomLine(midLines));
+      else showDialog(randomLine(lateLines));
+
+      lastDialogTime = now;
+    }
+
+    // ====== 绘制：奶牛（更明显可爱表情变化）======
+    function drawCow(x, y, size, mood, now) {
+      // 身体
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size, size * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 斑点
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.3, y - size * 0.2, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y + size * 0.3, size * 0.2, size * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 头部
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 耳朵
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 角
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.2, y - size * 1.1);
+      ctx.lineTo(x - size * 0.15, y - size * 1.3);
+      ctx.moveTo(x + size * 0.2, y - size * 1.1);
+      ctx.lineTo(x + size * 0.15, y - size * 1.3);
+      ctx.stroke();
+
+      // ===== 眼睛（加眨眼/星星眼/委屈眼）=====
+      const eyeY = y - size * 0.82;
+      const isBlink = now < player.blinkUntil;
+
+      // 眼睛高度
+      let eyeH = size * 0.055;
+      if (mood === "tired") eyeH = size * 0.035;
+      if (mood === "critical") eyeH = size * 0.020;
+      if (mood === "happy" || mood === "smug") eyeH = size * 0.060;
+
+      const eyeW = size * 0.095;
+      ctx.fillStyle = '#000000';
+
+      function drawEye(ex, ey) {
+        if (isBlink) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(ex - eyeW, ey);
+          ctx.lineTo(ex + eyeW, ey);
+          ctx.stroke();
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, eyeW, eyeH, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // happy/smug：加小高光（可爱感更强）
+        if (mood === "happy" || mood === "smug") {
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.beginPath();
+          ctx.arc(ex - eyeW*0.35, ey - eyeH*0.35, size*0.06, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#000000';
+        }
+
+        // critical：加“泪光”
+        if (mood === "critical") {
+          ctx.fillStyle = 'rgba(120,210,255,0.7)';
+          ctx.beginPath();
+          ctx.arc(ex + eyeW*0.55, ey + eyeH*0.9, size*0.07, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#000000';
+        }
+      }
+
+      drawEye(x - size * 0.28, eyeY);
+      drawEye(x + size * 0.28, eyeY);
+
+      // 眼袋（tired/critical）
+      if (!isBlink && (mood === "tired" || mood === "critical")) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.32)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x - size * 0.28, eyeY + size * 0.10, size * 0.10, 0, Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + size * 0.28, eyeY + size * 0.10, size * 0.10, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      // ===== 嘴巴（更明显：笑/苦/摆烂）=====
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (mood === "happy") {
+        ctx.arc(x, y - size * 0.62, size * 0.24, 0, Math.PI);
+      } else if (mood === "smug") {
+        // 歪嘴
+        ctx.arc(x + size*0.08, y - size*0.62, size*0.22, 0.15, Math.PI - 0.15);
+      } else if (mood === "critical") {
+        ctx.arc(x, y - size * 0.52, size * 0.22, Math.PI, Math.PI * 2);
+      } else if (mood === "tired") {
+        ctx.moveTo(x - size * 0.25, y - size * 0.58);
+        ctx.lineTo(x + size * 0.25, y - size * 0.58);
+      } else {
+        ctx.arc(x, y - size * 0.60, size * 0.20, 0, Math.PI);
+      }
+      ctx.stroke();
+
+      // ===== 小脸红（开心/装X）=====
+      if (mood === "happy" || mood === "smug") {
+        ctx.fillStyle = 'rgba(255,120,180,0.25)';
+        ctx.beginPath();
+        ctx.ellipse(x - size*0.50, y - size*0.64, size*0.16, size*0.10, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(x + size*0.50, y - size*0.64, size*0.16, size*0.10, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // 小马敌人
+    function drawHorse(x, y, size) {
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.6, size * 0.5, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#654321';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.8, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Boss
+    function drawBoss(x, y, size) {
+      ctx.fillStyle = '#FF6B6B';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#8B0000';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.6, y - size * 0.4);
+      ctx.lineTo(x - size * 0.2, y - size * 0.3);
+      ctx.moveTo(x + size * 0.6, y - size * 0.4);
+      ctx.lineTo(x + size * 0.2, y - size * 0.3);
+      ctx.stroke();
+    }
+
+    // 视觉金币粒子
+    function drawCoin(x, y, size) {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFA500';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${size}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('¥', x, y);
+    }
+
+    function createParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 9,
+          vy: (Math.random() - 0.7) * 10,
+          size: Math.random() * 5 + 2,
+          color,
+          life: 1
+        });
+      }
+    }
+
+    function createCoinParticles(x, y, n = 5) {
+      for (let i = 0; i < n; i++) {
+        coinParticles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 5,
+          vy: -Math.random() * 5 - 2,
+          size: 12 + Math.random() * 4,
+          life: 1
+        });
+      }
+    }
+
+    function addFloatText(x, y, text, color = "#e0f7fa") {
+      floatTexts.push({
+        x, y,
+        text,
+        color,
+        vy: -1.0,
+        life: 1
+      });
+    }
+
+    function updateParticles(dt) {
+      particles = particles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35;
+        p.life -= 0.018;
+        p.size *= 0.985;
+        return p.life > 0;
+      });
+
+      coinParticles = coinParticles.filter(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vy += 0.28;
+        c.life -= 0.012;
+        return c.life > 0;
+      });
+
+      floatTexts = floatTexts.filter(t => {
+        t.y += t.vy;
+        t.life -= 0.020;
+        return t.life > 0;
+      });
+    }
+
+    function drawParticles(now) {
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      coinParticles.forEach(c => {
+        ctx.globalAlpha = c.life;
+        drawCoin(c.x, c.y, c.size);
+      });
+
+      floatTexts.forEach(t => {
+        ctx.globalAlpha = t.life;
+        ctx.fillStyle = t.color;
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(t.text, t.x, t.y);
+      });
+
+      ctx.globalAlpha = 1;
+    }
+
+    // ====== 敌人生成 + 行为 ======
+    function pickBehavior() {
+      const r = Math.random();
+      if (r < ENEMY_BEHAVIOR.chase) return "chase";
+      if (r < ENEMY_BEHAVIOR.chase + ENEMY_BEHAVIOR.wander) return "wander";
+      return "flee";
+    }
+
+    function spawnEnemy() {
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      switch (side) {
+        case 0: x = Math.random() * canvas.width; y = -50; break;
+        case 1: x = canvas.width + 50; y = Math.random() * canvas.height; break;
+        case 2: x = Math.random() * canvas.width; y = canvas.height + 50; break;
+        case 3: x = -50; y = Math.random() * canvas.height; break;
+      }
+
+      const isBoss = Math.random() < 0.10;
+      const behavior = pickBehavior();
+
+      enemies.push({
+        x, y,
+        size: isBoss ? 40 : 25,
+        speed: isBoss ? 1.6 : (2.0 + difficulty * 0.25),
+        isBoss,
+        hp: isBoss ? 3 : 1,
+        behavior, // chase | wander | flee
+        // wander：随机方向一段时间
+        vx: (Math.random() - 0.5) * 2.4,
+        vy: (Math.random() - 0.5) * 2.4,
+        nextTurnAt: performance.now() + 700 + Math.random() * 900
+      });
+    }
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    // ====== 金币指数增长：基于“阶段” ======
+    function currentCoinStage() {
+      // 你可以按难度/时间任意定义stage。这里按 difficulty + 时间混合。
+      const tStage = Math.floor(secondsSurvived / 25);
+      const dStage = Math.floor((difficulty - 1) * 0.8);
+      return Math.max(0, tStage + dStage);
+    }
+
+    function coinsForKill(isBoss) {
+      const stage = currentCoinStage();
+      const base = COIN_GROWTH_BASE * Math.pow(COIN_GROWTH_FACTOR, stage);
+      const c = Math.round(base * (isBoss ? BOSS_COIN_MULT : 1));
+      return Math.max(1, c);
+    }
+
+    // ====== 表情更新（更明显）======
+    function scheduleBlink(now) {
+      if (player.nextBlinkAt === 0) {
+        player.nextBlinkAt = now + 900 + Math.random() * 1800;
+      }
+      if (now >= player.nextBlinkAt) {
+        player.blinkUntil = now + 120; // 眨眼持续
+        player.nextBlinkAt = now + 900 + Math.random() * 1800;
+      }
+    }
+
+    function updateMood(now) {
+      // 眨眼调度
+      scheduleBlink(now);
+
+      // 快乐/装X优先
+      if (now < player.happyUntil) {
+        player.mood = "happy";
+        return;
+      }
+      if (now < player.wagUntil) {
+        player.mood = "smug";
+        return;
+      }
+
+      const hpRatio = hp / MAX_HP;
+      if (hp <= 14) player.mood = "critical";
+      else if (hpRatio < 0.40 || difficulty >= 7) player.mood = "tired";
+      else player.mood = "calm";
+    }
+
+    // ====== 击杀奖励 ======
+    function rewardForKill(isBoss, x, y) {
+      const gainedCoins = coinsForKill(isBoss);
+
+      if (isBoss) {
+        hp = clamp(hp + BOSS_HEAL, 0, MAX_HP);
+        score += 120;
+        coinScore += gainedCoins;
+
+        createParticles(x, y, '#FFD700', 34);
+        createCoinParticles(x, y, 10);
+        addFloatText(x, y - 10, `+${BOSS_HEAL} HP`, "#92fe9d");
+        addFloatText(x, y + 12, `+${gainedCoins} 金币`, "#FFD700");
+      } else {
+        hp = clamp(hp + SMALL_HEAL, 0, MAX_HP);
+        score += 12;
+        coinScore += gainedCoins;
+
+        createParticles(x, y, '#00FF88', 20);
+        createCoinParticles(x, y, 5);
+        addFloatText(x, y - 10, `+${SMALL_HEAL} HP`, "#92fe9d");
+        addFloatText(x, y + 12, `+${gainedCoins} 金币`, "#FFD700");
+      }
+
+      // 击杀瞬间：开心一下；偶尔进入“装X”表情
+      player.happyUntil = performance.now() + 750;
+      if (Math.random() < 0.18) player.wagUntil = performance.now() + 650;
+    }
+
+    // ====== 寿命指数减少：前慢后快 ======
+    function daysDecayPerSec(tSeconds) {
+      // tSeconds越大，减得越快
+      return DAYS_DECAY_BASE * Math.pow(1 + (tSeconds / DAYS_DECAY_T), DAYS_DECAY_POWER);
+    }
+
+    // ====== 游戏更新 ======
+    function update(now, dt) {
+      if (!gameRunning) return;
+
+      // 1) 时间推进
+      secondsSurvived += dt;
+      // 寿命按“当前秒流速”扣
+      const decay = daysDecayPerSec(secondsSurvived) * dt;
+      daysLeft -= decay;
+      if (daysLeft < 0) daysLeft = 0;
+
+      // 2) 奶瓶产线更新
+      updateMilkLine(now);
+
+      // 3) 玩家移动
+      const dx = player.targetX - player.x;
+      const dy = player.targetY - player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 4) {
+        player.x += (dx / dist) * player.speed;
+        player.y += (dy / dist) * player.speed;
+      }
+
+      // 4) 敌人移动 + 碰撞
+      enemies.forEach((enemy, index) => {
+        const pdx = player.x - enemy.x;
+        const pdy = player.y - enemy.y;
+        const pDist = Math.sqrt(pdx * pdx + pdy * pdy) || 0.0001;
+
+        if (enemy.behavior === "chase") {
+          enemy.x += (pdx / pDist) * enemy.speed;
+          enemy.y += (pdy / pDist) * enemy.speed;
+        } else if (enemy.behavior === "flee") {
+          // 远离主角（轻松感：让一部分怪不烦人）
+          enemy.x -= (pdx / pDist) * (enemy.speed * 0.9);
+          enemy.y -= (pdy / pDist) * (enemy.speed * 0.9);
+        } else {
+          // wander：随机游走 + 偶尔转向
+          if (now >= enemy.nextTurnAt) {
+            enemy.vx = (Math.random() - 0.5) * 3.2;
+            enemy.vy = (Math.random() - 0.5) * 3.2;
+            enemy.nextTurnAt = now + 650 + Math.random() * 1100;
+          }
+          enemy.x += enemy.vx;
+          enemy.y += enemy.vy;
+
+          // 轻微“边界反弹”
+          if (enemy.x < 20 || enemy.x > canvas.width - 20) enemy.vx *= -1;
+          if (enemy.y < 20 || enemy.y > canvas.height - 20) enemy.vy *= -1;
+        }
+
+        // 约束在画面附近
+        enemy.x = clamp(enemy.x, -80, canvas.width + 80);
+        enemy.y = clamp(enemy.y, -80, canvas.height + 80);
+
+        // 碰撞判定（更休闲：扣血少）
+        if (pDist < player.size + enemy.size) {
+          hp -= enemy.isBoss ? BOSS_DAMAGE : SMALL_DAMAGE;
+          hp = clamp(hp, 0, MAX_HP);
+
+          // 贴脸处理：boss要打3次才死；小怪碰到就“被你打工吸收”
+          if (enemy.isBoss) {
+            enemy.hp--;
+            if (enemy.hp <= 0) {
+              rewardForKill(true, enemy.x, enemy.y);
+              enemies.splice(index, 1);
+            }
+          } else {
+            rewardForKill(false, enemy.x, enemy.y);
+            enemies.splice(index, 1);
+          }
+        }
+      });
+
+      // 5) 难度（增速更温和）
+      difficulty = Math.floor(score / 140) + 1;
+
+      // 6) 生成敌人（更少一些）
+      const spawnRate = Math.min(SPAWN_RATE_CAP, SPAWN_RATE_BASE + difficulty * 0.0018);
+      if (Math.random() < spawnRate) spawnEnemy();
+
+      // 7) 特效/表情/台词
+      updateParticles(dt);
+      updateMood(now);
+      updateDialog(now);
+
+      // 8) UI
+      document.getElementById('daysLeft').textContent = Math.floor(daysLeft);
+      document.getElementById('hp').textContent = Math.floor(hp);
+      document.getElementById('difficulty').textContent = difficulty;
+      document.getElementById('coinScore').textContent = coinScore;
+
+      // 9) 结束条件（寿命或HP归零）
+      if (daysLeft <= 0 || hp <= 0) {
+        gameOver();
+      }
+    }
+
+    // ====== 绘制 ======
+    function draw(now) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 小小流汗（tired/critical）
+      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.25) {
+        ctx.fillStyle = '#87CEEB';
+        ctx.beginPath();
+        ctx.arc(player.x - player.size * 0.85, player.y - player.size * 0.55, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 玩家
+      drawCow(player.x, player.y, player.size, player.mood, now);
+
+      // 敌人
+      enemies.forEach(enemy => {
+        if (enemy.isBoss) drawBoss(enemy.x, enemy.y, enemy.size);
+        else drawHorse(enemy.x, enemy.y, enemy.size);
+      });
+
+      // 特效
+      drawParticles(now);
+
+      // 右下角奶瓶“产线”
+      drawMilkLine(now);
+    }
+
+    // ====== 游戏循环 ======
+    function gameLoop(now) {
+      const dt = Math.min(0.035, (now - lastFrame) / 1000); // 秒
+      lastFrame = now;
+
+      update(now, dt);
+      draw(now);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('finalCoins').textContent = coinScore;
+      document.getElementById('finalSeconds').textContent = Math.floor(secondsSurvived);
+      gameOverPanel.style.display = 'block';
+    }
+
+    function restart() {
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      player.targetX = canvas.width / 2;
+      player.targetY = canvas.height / 2;
+
+      player.mood = "calm";
+      player.happyUntil = 0;
+      player.blinkUntil = 0;
+      player.nextBlinkAt = 0;
+      player.wagUntil = 0;
+
+      enemies = [];
+      particles = [];
+      coinParticles = [];
+      floatTexts = [];
+
+      daysLeft = INITIAL_DAYS;
+      hp = MAX_HP;
+      score = 0;
+      coinScore = 0;
+      difficulty = 1;
+
+      secondsSurvived = 0;
+      lastFrame = performance.now();
+      lastDialogTime = 0;
+
+      milkLine.items = [];
+      milkLine.lastAdd = 0;
+
+      dialogBox.style.display = "none";
+      if (dialogHideTimer) {
+        clearTimeout(dialogHideTimer);
+        dialogHideTimer = null;
+      }
+
+      gameRunning = true;
+      gameOverPanel.style.display = 'none';
+    }
+
+    // ====== 控制 ======
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      player.targetX = e.clientX - rect.left;
+      player.targetY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      player.targetX = touch.clientX - rect.left;
+      player.targetY = touch.clientY - rect.top;
+    }, { passive: false });
+
+    restartBtn.addEventListener('click', restart);
+
+    // 兼容某些浏览器：roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        const min = Math.min(w, h) / 2;
+        r = Math.min(r, min);
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // 开始
+    requestAnimationFrame((t) => {
+      lastFrame = t;
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
 </body>
 </html>
