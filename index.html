@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>职场生存法则</title>
+  <title>职场主角升级模拟器</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,21 +14,21 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       overflow: hidden;
     }
 
     #gameInfo {
       position: absolute;
       top: 20px;
-      width: 92%;
-      max-width: 720px;
+      width: 90%;
+      max-width: 760px;
       display: flex;
-      gap: 12px;
       justify-content: space-between;
+      gap: 10px;
       background: rgba(255, 255, 255, 0.15);
       padding: 14px 22px;
-      border-radius: 18px;
+      border-radius: 20px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.18);
@@ -38,8 +38,6 @@
       z-index: 10;
       flex-wrap: wrap;
     }
-
-    #gameInfo > div { white-space: nowrap; }
 
     #gameCanvas {
       border: 2px solid rgba(173, 216, 230, 0.5);
@@ -56,8 +54,8 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(30, 30, 50, 0.9);
-      padding: 38px;
-      border-radius: 22px;
+      padding: 40px;
+      border-radius: 25px;
       text-align: center;
       display: none;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
@@ -69,7 +67,7 @@
 
     #gameOverPanel h2 {
       color: #e0f7fa;
-      font-size: 34px;
+      font-size: 32px;
       margin-bottom: 16px;
       text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
     }
@@ -87,9 +85,9 @@
       background: linear-gradient(45deg, #00c9ff, #92fe9d);
       color: #0a1929;
       border: none;
-      border-radius: 28px;
+      border-radius: 30px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s;
       font-weight: bold;
       box-shadow: 0 5px 15px rgba(0, 201, 255, 0.4);
     }
@@ -100,21 +98,22 @@
     }
   </style>
 </head>
+
 <body>
   <div id="gameInfo">
-    <div>剩余寿命: <span id="life">21346</span> 天</div>
+    <div>剩余寿命: <span id="daysLeft">21346</span> 天</div>
+    <div>生命值(HP): <span id="hp">100</span></div>
     <div>难度: <span id="difficulty">1</span></div>
     <div>金币积分: <span id="coinScore">0</span></div>
-    <div>存活时间: <span id="timeSurvived">0</span>s</div>
   </div>
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <div id="gameOverPanel">
-    <h2>职场生存结束！</h2>
+    <h2>职场主角：本局结束</h2>
     <p>最终得分: <span id="finalScore">0</span></p>
-    <p>累计获取寿命: <span id="totalLife">0</span> 天</p>
     <p>金币积分: <span id="finalCoins">0</span></p>
+    <p>存活时长: <span id="finalSeconds">0</span> 秒</p>
     <button id="restartBtn">重新开始</button>
   </div>
 
@@ -124,13 +123,18 @@
     const gameOverPanel = document.getElementById('gameOverPanel');
     const restartBtn = document.getElementById('restartBtn');
 
-    // ====== 核心参数 ======
-    const INITIAL_LIFE = 21346;
-    const LIFE_DECAY_PER_SEC = 1; // 每秒倒数 1 天（你可以调成 0.2 / 2 / 5）
-    const SMALL_ENEMY_LIFE_GAIN = 1;
-    const BOSS_LIFE_GAIN = 10;
+    // ====== 核心资源：寿命(不可恢复) + HP(可恢复) ======
+    const INITIAL_DAYS = 21346;
+    const MAX_HP = 100;
 
-    const SMALL_ENEMY_COIN = 1;
+    const DAYS_DECAY_PER_SEC = 1;   // 每秒寿命 -1 天（你想更狠就改成2）
+    const SMALL_DAMAGE = 8;         // 小怪贴脸扣血
+    const BOSS_DAMAGE = 18;         // Boss贴脸扣血
+
+    const SMALL_HEAL = 12;          // 打小怪回血
+    const BOSS_HEAL = 35;           // 打Boss回血
+
+    const SMALL_COIN = 1;
     const BOSS_COIN = 5;
 
     let player = {
@@ -140,27 +144,28 @@
       speed: 5,
       targetX: canvas.width / 2,
       targetY: canvas.height / 2,
-      mood: "calm",          // calm | tired | critical | happy
-      happyUntil: 0          // 时间戳：开心表情持续到什么时候
+      // 表情状态：calm | tired | critical | happy
+      mood: "calm",
+      happyUntil: 0
     };
 
     let enemies = [];
     let particles = [];
-    let coins = [];          // 视觉金币粒子（不需要拾取也会计分）
-    let floatTexts = [];     // 浮动文字 +1天 / +5金币
-    let life = INITIAL_LIFE;
+    let coins = [];       // 仅视觉金币粒子
+    let floatTexts = [];  // 浮动文字
+
+    let daysLeft = INITIAL_DAYS; // 倒计时：只会减少
+    let hp = MAX_HP;             // 可回复：生命值
     let score = 0;
+    let coinScore = 0;
     let difficulty = 1;
     let gameRunning = true;
-    let totalLifeGained = 0;
-    let coinScore = 0;
 
-    // 时间控制：用 deltaTime 做稳定倒计时
-    let lastTs = performance.now();
-    let lifeDecayAcc = 0;
-    let timeSurvived = 0;
+    // 用于“每秒扣寿命”
+    let lastSecondTick = performance.now();
+    let secondsSurvived = 0;
 
-    // ====== 绘制：奶牛（表情随 mood 变化）======
+    // ====== 绘制：奶牛（带表情）======
     function drawCow(x, y, size, mood) {
       // 身体
       ctx.fillStyle = '#ffffff';
@@ -183,10 +188,13 @@
       ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 眼睛 / 眼神
+      // 眼睛：疲惫/濒危更“眯”
       ctx.fillStyle = '#000000';
       const eyeW = size * 0.08;
-      const eyeH = (mood === "tired" ? size * 0.035 : mood === "critical" ? size * 0.025 : size * 0.05);
+      const eyeH =
+        mood === "critical" ? size * 0.025 :
+          mood === "tired" ? size * 0.035 :
+            size * 0.05;
       const eyeY = y - size * 0.8;
 
       ctx.beginPath();
@@ -196,7 +204,7 @@
       ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 眼袋（疲惫/濒危）
+      // 眼袋
       if (mood === "tired" || mood === "critical") {
         ctx.strokeStyle = 'rgba(0,0,0,0.35)';
         ctx.lineWidth = 2;
@@ -208,22 +216,18 @@
         ctx.stroke();
       }
 
-      // 嘴巴（情绪变化）
+      // 嘴巴：happy 微笑 / tired 平直 / critical 苦脸
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
       ctx.beginPath();
       if (mood === "happy") {
-        // 微笑
         ctx.arc(x, y - size * 0.62, size * 0.22, 0, Math.PI);
       } else if (mood === "critical") {
-        // 反向小哭脸
         ctx.arc(x, y - size * 0.52, size * 0.20, Math.PI, Math.PI * 2);
       } else if (mood === "tired") {
-        // 平直嘴
         ctx.moveTo(x - size * 0.22, y - size * 0.58);
         ctx.lineTo(x + size * 0.22, y - size * 0.58);
       } else {
-        // calm：轻微微笑
         ctx.arc(x, y - size * 0.60, size * 0.18, 0, Math.PI);
       }
       ctx.stroke();
@@ -359,7 +363,7 @@
       }
     }
 
-    // 浮动文字（+寿命/+金币）
+    // 浮动文字
     function addFloatText(x, y, text, color = "#e0f7fa") {
       floatTexts.push({
         x, y,
@@ -370,7 +374,7 @@
       });
     }
 
-    function updateParticles(dt) {
+    function updateParticles() {
       particles = particles.filter(p => {
         p.x += p.vx;
         p.y += p.vy;
@@ -381,7 +385,7 @@
       });
     }
 
-    function updateCoins(dt) {
+    function updateCoins() {
       coins = coins.filter(c => {
         c.x += c.vx;
         c.y += c.vy;
@@ -391,7 +395,7 @@
       });
     }
 
-    function updateFloatTexts(dt) {
+    function updateFloatTexts() {
       floatTexts = floatTexts.filter(t => {
         t.y += t.vy;
         t.life -= 0.02;
@@ -451,120 +455,129 @@
       });
     }
 
-    // 根据寿命状态更新表情
-    function updateMood(now) {
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    // 表情逻辑：低HP/高难度 => tired/critical；击杀短暂 happy
+    function updateMood() {
+      const now = performance.now();
       if (now < player.happyUntil) {
         player.mood = "happy";
         return;
       }
-      const ratio = life / INITIAL_LIFE;
-      if (life <= 300) player.mood = "critical";
-      else if (ratio < 0.35 || difficulty >= 6) player.mood = "tired";
+      const hpRatio = hp / MAX_HP;
+      if (hp <= 18) player.mood = "critical";
+      else if (hpRatio < 0.45 || difficulty >= 6) player.mood = "tired";
       else player.mood = "calm";
     }
 
-    function grantReward(enemy, x, y) {
-      if (enemy.isBoss) {
-        life += BOSS_LIFE_GAIN;
-        totalLifeGained += BOSS_LIFE_GAIN;
+    function rewardForKill(isBoss, x, y) {
+      if (isBoss) {
+        hp = clamp(hp + BOSS_HEAL, 0, MAX_HP);
         score += 100;
-
         coinScore += BOSS_COIN;
+
+        createParticles(x, y, '#FFD700', 30);
         createCoins(x, y, 8);
-        addFloatText(x, y - 10, `+${BOSS_LIFE_GAIN}天`, "#92fe9d");
-        addFloatText(x, y + 12, `+${BOSS_COIN}金币`, "#FFD700");
-
+        addFloatText(x, y - 10, `+${BOSS_HEAL} HP`, "#92fe9d");
+        addFloatText(x, y + 12, `+${BOSS_COIN} 金币`, "#FFD700");
       } else {
-        life += SMALL_ENEMY_LIFE_GAIN;
-        totalLifeGained += SMALL_ENEMY_LIFE_GAIN;
+        hp = clamp(hp + SMALL_HEAL, 0, MAX_HP);
         score += 10;
+        coinScore += SMALL_COIN;
 
-        coinScore += SMALL_ENEMY_COIN;
+        createParticles(x, y, '#00FF88', 20);
         createCoins(x, y, 4);
-        addFloatText(x, y - 10, `+${SMALL_ENEMY_LIFE_GAIN}天`, "#92fe9d");
-        addFloatText(x, y + 12, `+${SMALL_ENEMY_COIN}金币`, "#FFD700");
+        addFloatText(x, y - 10, `+${SMALL_HEAL} HP`, "#92fe9d");
+        addFloatText(x, y + 12, `+${SMALL_COIN} 金币`, "#FFD700");
       }
 
-      // 开心表情短暂出现 0.8 秒
+      // 开心表情 0.8s
       player.happyUntil = performance.now() + 800;
     }
 
-    function update(dt, now) {
+    // 更新游戏
+    function update() {
       if (!gameRunning) return;
 
-      // 倒数寿命：按秒扣
-      lifeDecayAcc += dt;
-      while (lifeDecayAcc >= 1000) {
-        life -= LIFE_DECAY_PER_SEC;
-        timeSurvived += 1;
-        lifeDecayAcc -= 1000;
-        if (life <= 0) {
-          life = 0;
-          break;
-        }
+      // 1) 寿命倒计时（不可恢复）
+      const now = performance.now();
+      if (now - lastSecondTick >= 1000) {
+        const secs = Math.floor((now - lastSecondTick) / 1000);
+        daysLeft -= secs * DAYS_DECAY_PER_SEC;
+        secondsSurvived += secs;
+        lastSecondTick += secs * 1000;
       }
+      if (daysLeft < 0) daysLeft = 0;
 
-      // 更新玩家位置
+      // 2) 更新玩家位置
       const dx = player.targetX - player.x;
       const dy = player.targetY - player.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 4) {
-        player.x += (dx / dist) * player.speed;
-        player.y += (dy / dist) * player.speed;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 5) {
+        player.x += (dx / distance) * player.speed;
+        player.y += (dy / distance) * player.speed;
       }
 
-      // 更新敌人追击 + 碰撞处理
+      // 3) 更新敌人追击 + 碰撞
       enemies.forEach((enemy, index) => {
-        const ex = player.x - enemy.x;
-        const ey = player.y - enemy.y;
-        const d = Math.sqrt(ex * ex + ey * ey);
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        enemy.x += (ex / d) * enemy.speed;
-        enemy.y += (ey / d) * enemy.speed;
+        enemy.x += (dx / distance) * enemy.speed;
+        enemy.y += (dy / distance) * enemy.speed;
 
-        if (d < player.size + enemy.size) {
+        // 碰撞：扣HP；击杀回血
+        if (distance < player.size + enemy.size) {
+          hp -= enemy.isBoss ? BOSS_DAMAGE : SMALL_DAMAGE;
+          hp = clamp(hp, 0, MAX_HP);
+
           if (enemy.isBoss) {
             enemy.hp--;
             if (enemy.hp <= 0) {
-              createParticles(enemy.x, enemy.y, '#FFD700', 30);
-              grantReward(enemy, enemy.x, enemy.y);
+              rewardForKill(true, enemy.x, enemy.y);
               enemies.splice(index, 1);
             }
           } else {
-            createParticles(enemy.x, enemy.y, '#00FF88', 20);
-            grantReward(enemy, enemy.x, enemy.y);
+            rewardForKill(false, enemy.x, enemy.y);
             enemies.splice(index, 1);
           }
         }
       });
 
-      // 难度随 score 增长
+      // 4) 难度
       difficulty = Math.floor(score / 100) + 1;
 
-      // 生成新敌人（随难度增加）
-      const spawnChance = Math.min(0.18, 0.02 * difficulty);
-      if (Math.random() < spawnChance) spawnEnemy();
+      // 5) 生成新敌人
+      if (Math.random() < Math.min(0.18, 0.02 * difficulty)) {
+        spawnEnemy();
+      }
 
-      updateParticles(dt);
-      updateCoins(dt);
-      updateFloatTexts(dt);
-      updateMood(now);
+      // 6) 粒子/金币/浮字更新
+      updateParticles();
+      updateCoins();
+      updateFloatTexts();
+      updateMood();
 
-      // UI
-      document.getElementById('life').textContent = Math.max(0, Math.floor(life));
+      // 7) 更新UI
+      document.getElementById('daysLeft').textContent = Math.floor(daysLeft);
+      document.getElementById('hp').textContent = Math.floor(hp);
       document.getElementById('difficulty').textContent = difficulty;
       document.getElementById('coinScore').textContent = coinScore;
-      document.getElementById('timeSurvived').textContent = timeSurvived;
 
-      if (life <= 0) gameOver();
+      // 8) 游戏结束：寿命归零 或 HP归零
+      if (daysLeft <= 0 || hp <= 0) {
+        gameOver();
+      }
     }
 
+    // 绘制游戏
     function draw() {
-      // 清空（带拖尾）
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 玩家流汗（紧张时更明显）
+      // 流汗：HP低/疲惫时更明显
       if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.35) {
         ctx.fillStyle = '#87CEEB';
         ctx.beginPath();
@@ -572,38 +585,38 @@
         ctx.fill();
       }
 
-      // 画玩家
+      // 玩家
       drawCow(player.x, player.y, player.size, player.mood);
 
-      // 画敌人
+      // 敌人
       enemies.forEach(enemy => {
         if (enemy.isBoss) drawBoss(enemy.x, enemy.y, enemy.size);
         else drawHorse(enemy.x, enemy.y, enemy.size);
       });
 
-      // 画粒子 / 金币 / 浮字
+      // 视觉效果
       drawParticles();
       drawCoins();
       drawFloatTexts();
     }
 
-    function gameLoop(ts) {
-      const dt = ts - lastTs;
-      lastTs = ts;
-
-      update(dt, ts);
+    // 游戏循环
+    function gameLoop() {
+      update();
       draw();
       requestAnimationFrame(gameLoop);
     }
 
+    // 游戏结束
     function gameOver() {
       gameRunning = false;
       document.getElementById('finalScore').textContent = score;
-      document.getElementById('totalLife').textContent = totalLifeGained;
       document.getElementById('finalCoins').textContent = coinScore;
+      document.getElementById('finalSeconds').textContent = secondsSurvived;
       gameOverPanel.style.display = 'block';
     }
 
+    // 重新开始
     function restart() {
       player.x = canvas.width / 2;
       player.y = canvas.height / 2;
@@ -617,21 +630,19 @@
       coins = [];
       floatTexts = [];
 
-      life = INITIAL_LIFE;
+      daysLeft = INITIAL_DAYS;
+      hp = MAX_HP;
       score = 0;
-      difficulty = 1;
-      totalLifeGained = 0;
       coinScore = 0;
+      difficulty = 1;
+      secondsSurvived = 0;
 
-      lastTs = performance.now();
-      lifeDecayAcc = 0;
-      timeSurvived = 0;
-
+      lastSecondTick = performance.now();
       gameRunning = true;
       gameOverPanel.style.display = 'none';
     }
 
-    // 鼠标/触摸控制
+    // 控制
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       player.targetX = e.clientX - rect.left;
@@ -649,10 +660,7 @@
     restartBtn.addEventListener('click', restart);
 
     // 开始
-    requestAnimationFrame((ts) => {
-      lastTs = ts;
-      gameLoop(ts);
-    });
+    gameLoop();
   </script>
 </body>
 </html>
