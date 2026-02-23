@@ -21,8 +21,8 @@
     #gameInfo {
       position: absolute;
       top: 20px;
-      width: 90%;
-      max-width: 880px;
+      width: 92%;
+      max-width: 920px;
       display: flex;
       justify-content: space-between;
       gap: 10px;
@@ -51,7 +51,7 @@
     /* 对话框 */
     #dialogBox {
       position: absolute;
-      bottom: 78px;
+      bottom: 62px; /* 给右下角奶瓶留空间 */
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.75);
@@ -59,7 +59,7 @@
       padding: 14px 22px;
       border-radius: 20px;
       font-size: 16px;
-      max-width: min(860px, 78%);
+      max-width: min(920px, 78%);
       text-align: center;
       display: none;
       backdrop-filter: blur(6px);
@@ -67,40 +67,71 @@
       border: 1px solid rgba(255,255,255,0.16);
       line-height: 1.45;
       z-index: 50;
-      user-select: none;
     }
 
-    /* 奶瓶工作条 */
-    #milkBar {
+    /* 右下角奶瓶架 */
+    #bottleRack {
       position: absolute;
       right: 18px;
       bottom: 18px;
       display: flex;
-      gap: 8px;
-      z-index: 60;
-      user-select: none;
+      gap: 10px;
+      z-index: 30;
       pointer-events: none;
-      filter: drop-shadow(0 0 10px rgba(0, 200, 255, 0.25));
     }
 
-    .milk {
-      width: 34px;
-      height: 34px;
+    .bottleSlot {
+      width: 36px;
+      height: 46px;
       border-radius: 10px;
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.18);
-      display: grid;
-      place-items: center;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-      opacity: 0;
-      transform: translateY(6px) scale(0.96);
-      transition: opacity 350ms ease, transform 350ms ease;
-      font-size: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+      opacity: 0.35;
+      transition: opacity 240ms ease, transform 240ms ease;
     }
-    .milk.on {
+
+    .bottleSlot.active {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(-2px);
+    }
+
+    .bottleIcon {
+      width: 16px;
+      height: 28px;
+      border-radius: 8px 8px 10px 10px;
+      border: 1px solid rgba(255,255,255,0.35);
+      position: relative;
+      background: rgba(224,247,250,0.25);
+      box-shadow: 0 0 16px rgba(0,200,255,0.18);
+    }
+
+    .bottleIcon::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 8px;
+      border-radius: 6px 6px 4px 4px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(224,247,250,0.15);
+    }
+
+    .bottleFill {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      right: 2px;
+      border-radius: 6px 6px 8px 8px;
+      background: rgba(146,254,157,0.28);
+      height: 60%;
+      box-shadow: 0 0 12px rgba(146,254,157,0.18);
     }
 
     #gameOverPanel {
@@ -167,27 +198,27 @@
     <div>剩余寿命: <span id="daysLeft">21346</span> 天</div>
     <div>生命值(HP): <span id="hp">100</span></div>
     <div>难度: <span id="difficulty">1</span></div>
-    <div>金币积分: <span id="coinScore">0</span></div>
+    <div>金币: <span id="coinScore">0</span></div>
   </div>
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <div id="dialogBox"></div>
 
-  <!-- 奶瓶：右下角，从左往右出现，从右往左消失，最多5个 -->
-  <div id="milkBar">
-    <div class="milk"><span>🥛</span></div>
-    <div class="milk"><span>🥛</span></div>
-    <div class="milk"><span>🥛</span></div>
-    <div class="milk"><span>🥛</span></div>
-    <div class="milk"><span>🥛</span></div>
+  <!-- 奶瓶架：右下角，最多5个 -->
+  <div id="bottleRack" aria-hidden="true">
+    <div class="bottleSlot" id="slot0"><div class="bottleIcon"><div class="bottleFill"></div></div></div>
+    <div class="bottleSlot" id="slot1"><div class="bottleIcon"><div class="bottleFill"></div></div></div>
+    <div class="bottleSlot" id="slot2"><div class="bottleIcon"><div class="bottleFill"></div></div></div>
+    <div class="bottleSlot" id="slot3"><div class="bottleIcon"><div class="bottleFill"></div></div></div>
+    <div class="bottleSlot" id="slot4"><div class="bottleIcon"><div class="bottleFill"></div></div></div>
   </div>
 
   <div id="gameOverPanel">
     <h2>职场模拟器：本轮历练结束</h2>
     <div class="subtitle">Corporate Ascension Simulator — From Intern to Multiverse CEO</div>
     <p>最终得分: <span id="finalScore">0</span></p>
-    <p>金币积分: <span id="finalCoins">0</span></p>
+    <p>金币: <span id="finalCoins">0</span></p>
     <p>存活时长: <span id="finalSeconds">0</span> 秒</p>
     <button id="restartBtn">重新开始</button>
   </div>
@@ -199,49 +230,52 @@
     const restartBtn = document.getElementById('restartBtn');
     const dialogBox = document.getElementById('dialogBox');
 
-    // 奶瓶 UI
-    const milkEls = Array.from(document.querySelectorAll(".milk"));
-    let milkCount = 0;
-    let milkAppearTimer = 0;
-    let milkVanishTimer = 0;
-
-    // ====== 核心资源：寿命(不可恢复) + HP(可恢复) ======
+    // ====== 基础资源 ======
     const INITIAL_DAYS = 21346;
-    const MAX_HP = 100;
+    const MAX_HP = 120; // 让休闲更耐打一点（原100）
+    // 扣血更少（更简单）
+    const SMALL_DAMAGE = 3;
+    const BOSS_DAMAGE  = 8;
 
-    // 让游戏更休闲：扣血更少 + 碰撞有冷却
-    const SMALL_DAMAGE = 3;         // 小怪贴脸扣血（更少）
-    const BOSS_DAMAGE  = 7;         // Boss贴脸扣血（更少）
-    const HIT_COOLDOWN_MS = 420;    // 同一帧擦边也不会疯狂掉血
-
-    // 回血也更舒服
+    // 击杀回血更强一点（休闲爽感）
     const SMALL_HEAL = 10;
-    const BOSS_HEAL  = 24;
+    const BOSS_HEAL  = 28;
 
-    // 指数金币增长：基础金币 × (1 + growth)^t
-    const SMALL_COIN_BASE = 1;
-    const BOSS_COIN_BASE  = 4;
+    // 初始寿命减少（很慢），随后指数变快（时光飞逝）
+    const BASE_DAYS_DECAY_PER_SEC = 0.18; // 早期很慢
+    const DECAY_GROWTH_K = 180;           // 越小越快变猛（秒）
+    const DECAY_MAX_CAP = 35;             // 每秒最多扣多少天（上限防爆炸到不可玩）
 
-    // 寿命指数减少：开始慢，后面越来越快（每秒扣的“天数”随时间指数增长）
-    const DAYS_DECAY_BASE_PER_SEC = 0.10; // 早期每秒扣0.10天（很慢）
-    const DAYS_DECAY_GROWTH_PER_MIN = 1.075; // 每分钟×1.075，后期飞快
+    // 金币指数增长：增幅随时间/难度攀升
+    const COIN_BASE_SMALL = 1;
+    const COIN_BASE_BOSS  = 5;
+    const COIN_EXP_K = 120;   // 越小增长越疯狂
+    const COIN_CAP_MULT = 500; // 防爆上限（仍很离谱）
 
-    // ====== 玩家 ======
+    // 刷怪：更密、更波动
+    const ENEMY_TARGET_MIN = 8;
+    const ENEMY_TARGET_MAX = 26;
+
+    // 敌人行为模式：追击/游走/远离
+    const MODE_CHASE = "chase";
+    const MODE_WANDER = "wander";
+    const MODE_FLEE = "flee";
+
     let player = {
       x: canvas.width / 2,
       y: canvas.height / 2,
       size: 30,
-      speed: 5,
+      speed: 5.2,
       targetX: canvas.width / 2,
       targetY: canvas.height / 2,
-      mood: "calm",  // calm | tired | critical | happy | evil
+      mood: "calm",
       happyUntil: 0,
       evilUntil: 0
     };
 
     let enemies = [];
     let particles = [];
-    let coinParticles = [];  // 视觉金币粒子
+    let coinsVisual = [];
     let floatTexts = [];
 
     let daysLeft = INITIAL_DAYS;
@@ -251,11 +285,10 @@
     let difficulty = 1;
     let gameRunning = true;
 
-    // 时间
+    let lastSecondTick = performance.now();
     let secondsSurvived = 0;
-    let lastFrameTime = performance.now();
 
-    // 台词（按你给的新版本）
+    // ====== 台词（你给的新版本）======
     const earlyLines = [
       "第一天上班……",
       "为什么空气这么压抑？",
@@ -311,9 +344,8 @@
       "被裁员那天，我绑定了职场神豪系统。"
     ];
 
-    // 对话频率
     let lastDialogTime = 0;
-    const DIALOG_MIN_INTERVAL_MS = 7500;
+    const DIALOG_MIN_INTERVAL_MS = 7000;
     const DIALOG_SHOW_MS = 3200;
     let dialogHideTimer = null;
 
@@ -330,47 +362,63 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function updateDialog(now) {
+    function updateDialog() {
+      const now = performance.now();
       if (now - lastDialogTime < DIALOG_MIN_INTERVAL_MS) return;
 
-      // 概率：早期更勤快，后期更“天道发言稀有”
-      const chance = secondsSurvived < 60 ? 0.75 : (secondsSurvived < 180 ? 0.60 : 0.48);
+      const chance = secondsSurvived < 60 ? 0.78 : (secondsSurvived < 180 ? 0.62 : 0.48);
       if (Math.random() > chance) return;
 
-      if (secondsSurvived < 65) showDialog(randomLine(earlyLines));
-      else if (secondsSurvived < 190) showDialog(randomLine(midLines));
+      if (secondsSurvived < 60) showDialog(randomLine(earlyLines));
+      else if (secondsSurvived < 180) showDialog(randomLine(midLines));
       else showDialog(randomLine(lateLines));
 
       lastDialogTime = now;
     }
 
-    // ====== 奶瓶逻辑：从左出现，从右消失，最多5个 ======
-    function renderMilkBar() {
-      for (let i = 0; i < milkEls.length; i++) {
-        if (i < milkCount) milkEls[i].classList.add("on");
-        else milkEls[i].classList.remove("on");
+    // ====== 奶瓶系统：最多5个，右->左出现，左->右消失 ======
+    const bottleSlots = [
+      document.getElementById("slot0"),
+      document.getElementById("slot1"),
+      document.getElementById("slot2"),
+      document.getElementById("slot3"),
+      document.getElementById("slot4"),
+    ];
+
+    let bottles = [0,0,0,0,0]; // 0 empty / 1 active
+    let bottleSpawnTimer = 0;
+    let bottleDespawnTimer = 0;
+
+    function renderBottles() {
+      for (let i = 0; i < 5; i++) {
+        if (bottles[i] === 1) bottleSlots[i].classList.add("active");
+        else bottleSlots[i].classList.remove("active");
       }
     }
 
-    function updateMilk(now) {
-      // 出现节奏：不断工作，比较频繁
-      // 每 650~1100ms 加一个（上限5）
-      if (milkCount < 5 && now > milkAppearTimer) {
-        milkCount++;
-        milkAppearTimer = now + (650 + Math.random() * 450);
+    // 右边第一个开始出现：索引 4,3,2,1,0
+    function spawnBottleFromRight() {
+      for (let i = 4; i >= 0; i--) {
+        if (bottles[i] === 0) {
+          bottles[i] = 1;
+          return true;
+        }
       }
-
-      // 消失节奏：从右边开始消失（整体数量减少即可表现右消失）
-      // 每 900~1500ms 减一个（下限0）
-      if (milkCount > 0 && now > milkVanishTimer) {
-        milkCount--;
-        milkVanishTimer = now + (900 + Math.random() * 600);
-      }
-
-      renderMilkBar();
+      return false;
     }
 
-    // ====== 绘制：奶牛（含隐藏邪恶表情彩蛋）======
+    // 从左边第一个开始消失：索引 0,1,2,3,4
+    function despawnBottleFromLeft() {
+      for (let i = 0; i < 5; i++) {
+        if (bottles[i] === 1) {
+          bottles[i] = 0;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // ====== 绘制：奶牛（表情：calm/tired/critical/happy + 彩蛋evil）======
     function drawCow(x, y, size, mood) {
       // 身体
       ctx.fillStyle = '#ffffff';
@@ -393,39 +441,43 @@
       ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      const eyeY = y - size * 0.8;
-
-      // 眼睛高度：疲惫更眯；邪恶更尖
-      ctx.fillStyle = '#000000';
+      // 眼睛形态
       const eyeW = size * 0.08;
-      const eyeH =
-        mood === "evil" ? size * 0.03 :
-        mood === "critical" ? size * 0.026 :
-        mood === "tired" ? size * 0.036 :
+      let eyeH =
+        mood === "critical" ? size * 0.022 :
+        mood === "tired" ? size * 0.032 :
         size * 0.05;
 
+      // 邪恶彩蛋：更尖更坏
+      const evil = (performance.now() < player.evilUntil);
+      if (evil) eyeH = size * 0.06;
+
+      const eyeY = y - size * 0.8;
+
+      // 眼睛颜色（邪恶时微红）
+      ctx.fillStyle = evil ? "rgba(255,80,80,0.95)" : "#000000";
       ctx.beginPath();
-      ctx.ellipse(x - size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.ellipse(x - size * 0.3, eyeY, eyeW, eyeH, evil ? -0.45 : 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, evil ? 0.45 : 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 眉毛：邪恶彩蛋
-      if (mood === "evil") {
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 3;
+      // 眉毛（邪恶时）
+      if (evil) {
+        ctx.strokeStyle = "rgba(0,0,0,0.9)";
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(x - size * 0.55, eyeY - size * 0.12);
-        ctx.lineTo(x - size * 0.15, eyeY - size * 0.03);
-        ctx.moveTo(x + size * 0.55, eyeY - size * 0.12);
-        ctx.lineTo(x + size * 0.15, eyeY - size * 0.03);
+        ctx.moveTo(x - size * 0.52, eyeY - size * 0.18);
+        ctx.lineTo(x - size * 0.18, eyeY - size * 0.05);
+        ctx.moveTo(x + size * 0.52, eyeY - size * 0.18);
+        ctx.lineTo(x + size * 0.18, eyeY - size * 0.05);
         ctx.stroke();
       }
 
-      // 眼袋：疲惫/濒危
+      // 眼袋
       if (mood === "tired" || mood === "critical") {
-        ctx.strokeStyle = 'rgba(0,0,0,0.33)';
+        ctx.strokeStyle = 'rgba(0,0,0,0.32)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(x - size * 0.3, eyeY + size * 0.08, size * 0.08, 0, Math.PI);
@@ -435,20 +487,21 @@
         ctx.stroke();
       }
 
-      // 嘴巴：happy微笑 / tired平直 / critical苦脸 / evil邪笑
+      // 嘴巴
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      if (mood === "happy") {
+      if (evil) {
+        // 坏笑
+        ctx.moveTo(x - size * 0.2, y - size * 0.6);
+        ctx.quadraticCurveTo(x, y - size * 0.48, x + size * 0.26, y - size * 0.62);
+      } else if (mood === "happy") {
         ctx.arc(x, y - size * 0.62, size * 0.22, 0, Math.PI);
       } else if (mood === "critical") {
         ctx.arc(x, y - size * 0.52, size * 0.20, Math.PI, Math.PI * 2);
       } else if (mood === "tired") {
         ctx.moveTo(x - size * 0.22, y - size * 0.58);
         ctx.lineTo(x + size * 0.22, y - size * 0.58);
-      } else if (mood === "evil") {
-        // 邪笑：偏斜的小弧
-        ctx.arc(x + size * 0.05, y - size * 0.58, size * 0.22, 0.15, Math.PI - 0.05);
       } else {
         ctx.arc(x, y - size * 0.60, size * 0.18, 0, Math.PI);
       }
@@ -537,7 +590,8 @@
       ctx.stroke();
     }
 
-    function drawCoin(x, y, size) {
+    // ====== 视觉特效 ======
+    function drawCoinIcon(x, y, size) {
       ctx.fillStyle = '#FFD700';
       ctx.beginPath();
       ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -568,9 +622,9 @@
       }
     }
 
-    function createCoinParticles(x, y, n = 5) {
+    function createCoinsVisual(x, y, n = 5) {
       for (let i = 0; i < n; i++) {
-        coinParticles.push({
+        coinsVisual.push({
           x, y,
           vx: (Math.random() - 0.5) * 5,
           vy: -Math.random() * 5 - 2,
@@ -582,39 +636,37 @@
 
     function addFloatText(x, y, text, color = "#e0f7fa") {
       floatTexts.push({
-        x, y,
-        text,
-        color,
+        x, y, text, color,
         vy: -1.2,
         life: 1
       });
     }
 
-    function updateParticles(dt) {
+    function updateParticles() {
       particles = particles.filter(p => {
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.5;
-        p.life -= 0.02 * dt * 60;
-        p.size *= (1 - 0.02 * dt * 60 * 0.02);
+        p.life -= 0.02;
+        p.size *= 0.98;
         return p.life > 0;
       });
     }
 
-    function updateCoinParticles(dt) {
-      coinParticles = coinParticles.filter(c => {
+    function updateCoinsVisual() {
+      coinsVisual = coinsVisual.filter(c => {
         c.x += c.vx;
         c.y += c.vy;
         c.vy += 0.3;
-        c.life -= 0.01 * dt * 60;
+        c.life -= 0.01;
         return c.life > 0;
       });
     }
 
-    function updateFloatTexts(dt) {
+    function updateFloatTexts() {
       floatTexts = floatTexts.filter(t => {
-        t.y += t.vy * dt * 60;
-        t.life -= 0.02 * dt * 60;
+        t.y += t.vy;
+        t.life -= 0.02;
         return t.life > 0;
       });
     }
@@ -630,10 +682,10 @@
       ctx.globalAlpha = 1;
     }
 
-    function drawCoinParticles() {
-      coinParticles.forEach(c => {
+    function drawCoinsVisual() {
+      coinsVisual.forEach(c => {
         ctx.globalAlpha = c.life;
-        drawCoin(c.x, c.y, c.size);
+        drawCoinIcon(c.x, c.y, c.size);
       });
       ctx.globalAlpha = 1;
     }
@@ -650,7 +702,17 @@
       ctx.globalAlpha = 1;
     }
 
-    // ====== 敌人行为：chase / wander / flee ======
+    // ====== 刷怪：更密度 + 波动 ======
+    // 用一个“波动目标数量”，系统会追着这个目标补齐/放缓
+    function computeEnemyTarget() {
+      // 波动：用两个不同频率的正弦叠加，再加一点随机
+      const t = secondsSurvived;
+      const wave = Math.sin(t * 0.7) * 0.5 + Math.sin(t * 0.17) * 0.5; // -1..1-ish
+      const noise = (Math.random() - 0.5) * 0.9;
+      const n = ENEMY_TARGET_MIN + (ENEMY_TARGET_MAX - ENEMY_TARGET_MIN) * (0.5 + 0.35 * wave + 0.15 * noise);
+      return Math.max(ENEMY_TARGET_MIN, Math.min(ENEMY_TARGET_MAX, Math.round(n)));
+    }
+
     function spawnEnemy() {
       const side = Math.floor(Math.random() * 4);
       let x, y;
@@ -661,70 +723,65 @@
         case 3: x = -50; y = Math.random() * canvas.height; break;
       }
 
-      const isBoss = Math.random() < 0.10;
+      // boss比例稍微降一点：更休闲
+      const isBoss = Math.random() < 0.08;
 
-      // 行为分布：一部分追你，一部分游荡，一部分逃离你
+      // 行为分布：一部分追击，一部分游走，一部分远离
       const r = Math.random();
-      const behavior = (r < 0.55) ? "chase" : (r < 0.80 ? "wander" : "flee");
+      let mode = MODE_CHASE;
+      if (r < 0.52) mode = MODE_CHASE;
+      else if (r < 0.82) mode = MODE_WANDER;
+      else mode = MODE_FLEE;
+
+      const baseSpeed = isBoss ? 2.0 : 2.2 + difficulty * 0.32;
 
       enemies.push({
         x, y,
         size: isBoss ? 40 : 25,
-        speed: isBoss ? 1.7 : (2.0 + difficulty * 0.25),
+        speed: baseSpeed,
         isBoss,
         hp: isBoss ? 3 : 1,
-        behavior,
-        // wander用：随机方向
-        vx: (Math.random() - 0.5) * 2.2,
-        vy: (Math.random() - 0.5) * 2.2,
-        nextTurn: performance.now() + (400 + Math.random() * 900),
-        lastHit: 0
+        mode,
+        // wander用：随机方向/计时器
+        vx: (Math.random() - 0.5) * baseSpeed,
+        vy: (Math.random() - 0.5) * baseSpeed,
+        wanderTimer: 0
       });
     }
 
     function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
-    // ====== 指数金币增长函数 ======
+    // ====== 金币指数增长 ======
     function coinMultiplier() {
-      // 每30秒明显变快
-      const t = secondsSurvived;
-      return Math.pow(1.06, t / 10); // 10秒×1.06 => 后期爆炸
+      // 随时间指数变大（后期疯涨），但给上限避免溢出
+      const mult = Math.exp(secondsSurvived / COIN_EXP_K);
+      return Math.min(COIN_CAP_MULT, mult);
     }
 
-    function rewardForKill(isBoss, x, y) {
-      if (isBoss) {
-        hp = clamp(hp + BOSS_HEAL, 0, MAX_HP);
-        score += 120;
-
-        const gain = Math.max(1, Math.floor(BOSS_COIN_BASE * coinMultiplier()));
-        coinScore += gain;
-
-        createParticles(x, y, '#FFD700', 34);
-        createCoinParticles(x, y, 10);
-        addFloatText(x, y - 10, `+${BOSS_HEAL} HP`, "#92fe9d");
-        addFloatText(x, y + 12, `+${gain} 金币`, "#FFD700");
-      } else {
-        hp = clamp(hp + SMALL_HEAL, 0, MAX_HP);
-        score += 12;
-
-        const gain = Math.max(1, Math.floor(SMALL_COIN_BASE * coinMultiplier()));
-        coinScore += gain;
-
-        createParticles(x, y, '#00FF88', 22);
-        createCoinParticles(x, y, 5);
-        addFloatText(x, y - 10, `+${SMALL_HEAL} HP`, "#92fe9d");
-        addFloatText(x, y + 12, `+${gain} 金币`, "#FFD700");
-      }
-
-      // 开心表情 0.85s
-      player.happyUntil = performance.now() + 850;
+    function coinGain(isBoss) {
+      const base = isBoss ? COIN_BASE_BOSS : COIN_BASE_SMALL;
+      // 还叠加一点难度：越后越离谱
+      const d = 1 + Math.max(0, difficulty - 1) * 0.12;
+      const gain = Math.round(base * coinMultiplier() * d);
+      return Math.max(base, gain);
     }
 
-    // 表情：低HP/高难度 => tired/critical；击杀短暂 happy；偶尔 evil 彩蛋
-    function updateMood(now) {
-      // 邪恶彩蛋：很低概率触发 0.7s
-      if (now > player.evilUntil && Math.random() < 0.0022) {
-        player.evilUntil = now + 700;
+    // ====== 寿命指数减少（前慢后快） ======
+    function daysDecayPerSecond() {
+      // 指数增长，但受cap约束
+      const rate = BASE_DAYS_DECAY_PER_SEC * Math.exp(secondsSurvived / DECAY_GROWTH_K);
+      return Math.min(DECAY_MAX_CAP, rate);
+    }
+
+    // ====== 表情逻辑（可爱 + 彩蛋邪恶） ======
+    function updateMood() {
+      const now = performance.now();
+
+      // 彩蛋：非常低概率触发邪恶表情，持续1.2秒（不影响游戏）
+      if (now > player.evilUntil && Math.random() < 0.0012) {
+        player.evilUntil = now + 1200;
+        // 彩蛋时也来一句“呵呵。”（小概率）
+        if (Math.random() < 0.35) showDialog("呵呵。");
       }
 
       if (now < player.evilUntil) {
@@ -738,91 +795,144 @@
       }
 
       const hpRatio = hp / MAX_HP;
-      if (hp <= 16) player.mood = "critical";
-      else if (hpRatio < 0.42 || difficulty >= 7) player.mood = "tired";
+      if (hp <= 18) player.mood = "critical";
+      else if (hpRatio < 0.45 || difficulty >= 9) player.mood = "tired";
       else player.mood = "calm";
     }
 
-    // ====== 刷怪密度：更多 + 波动不稳定（时多时少）======
-    // 用“波形 + 随机抖动 + 难度”控制生成概率
-    function spawnChance(now) {
-      const t = now / 1000; // 秒
-      // 基础密度更高
-      const base = 0.030 + Math.min(0.050, difficulty * 0.0045);
+    function rewardForKill(isBoss, x, y) {
+      // 回血
+      const heal = isBoss ? BOSS_HEAL : SMALL_HEAL;
+      hp = clamp(hp + heal, 0, MAX_HP);
 
-      // 波动：正弦+随机噪声，让它时多时少
-      const wave = 0.020 * (Math.sin(t * 0.9) * 0.5 + 0.5) + 0.018 * (Math.sin(t * 0.23 + 2.1) * 0.5 + 0.5);
-      const jitter = (Math.random() - 0.5) * 0.020;
+      // 得分
+      score += isBoss ? 120 : 12;
 
-      // clamp
-      return clamp(base + wave + jitter, 0.012, 0.16);
+      // 金币指数增长
+      const cg = coinGain(isBoss);
+      coinScore += cg;
+
+      // 视觉反馈
+      createParticles(x, y, isBoss ? '#FFD700' : '#00FF88', isBoss ? 34 : 20);
+      createCoinsVisual(x, y, isBoss ? 10 : 5);
+      addFloatText(x, y - 10, `+${heal} HP`, "#92fe9d");
+      addFloatText(x, y + 12, `+${cg} 金币`, "#FFD700");
+
+      // 开心表情
+      player.happyUntil = performance.now() + 650;
     }
 
-    // ====== 更新 ======
-    function update(now, dt) {
+    // ====== 游戏更新 ======
+    function update() {
       if (!gameRunning) return;
 
-      // 1) 寿命指数减少：开始慢，后面越来越快
-      const minutes = secondsSurvived / 60;
-      const decayRate = DAYS_DECAY_BASE_PER_SEC * Math.pow(DAYS_DECAY_GROWTH_PER_MIN, minutes); // 天/秒
-      daysLeft -= decayRate * dt;
+      // 1) 时间：寿命倒计时（指数加速）
+      const now = performance.now();
+      if (now - lastSecondTick >= 1000) {
+        const secs = Math.floor((now - lastSecondTick) / 1000);
+
+        // 每秒扣 daysDecayPerSecond()（逐渐越来越快）
+        // 用分段累计，避免大跳造成不稳定
+        for (let i = 0; i < secs; i++) {
+          daysLeft -= daysDecayPerSecond();
+          secondsSurvived += 1;
+        }
+
+        lastSecondTick += secs * 1000;
+      }
       if (daysLeft < 0) daysLeft = 0;
 
-      // 2) 计时
-      secondsSurvived += dt;
-
-      // 3) 玩家移动
+      // 2) 玩家位置
       const dx = player.targetX - player.x;
       const dy = player.targetY - player.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-
       if (distance > 5) {
-        player.x += (dx / distance) * player.speed * dt * 60;
-        player.y += (dy / distance) * player.speed * dt * 60;
+        player.x += (dx / distance) * player.speed;
+        player.y += (dy / distance) * player.speed;
       }
 
-      // 4) 敌人行为移动
+      // 3) 刷怪：目标数量波动 + 以“爆发式补齐”为主（密度高但不稳定）
+      const target = computeEnemyTarget();
+      const deficit = target - enemies.length;
+
+      // 如果缺口大，就瞬间补几个（制造“突然变多”）
+      if (deficit > 0) {
+        const burst = Math.min(deficit, 1 + Math.floor(Math.random() * 4)); // 1~4
+        for (let i = 0; i < burst; i++) spawnEnemy();
+      } else {
+        // 如果怪太多，不强行清：让密度自然波动
+      }
+
+      // 额外随机“风暴刷怪”：让数量更不稳定
+      if (Math.random() < 0.045 + difficulty * 0.002) {
+        const extra = 1 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < extra; i++) spawnEnemy();
+      }
+
+      // 4) 敌人行为：追击/游走/远离
       enemies.forEach((enemy, index) => {
-        const px = player.x, py = player.y;
-        const ex = enemy.x, ey = enemy.y;
-        const ddx = px - ex;
-        const ddy = py - ey;
-        const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 0.0001;
+        const px = player.x;
+        const py = player.y;
 
-        if (enemy.behavior === "chase") {
-          enemy.x += (ddx / dist) * enemy.speed * dt * 60;
-          enemy.y += (ddy / dist) * enemy.speed * dt * 60;
-        } else if (enemy.behavior === "flee") {
-          enemy.x -= (ddx / dist) * enemy.speed * dt * 60;
-          enemy.y -= (ddy / dist) * enemy.speed * dt * 60;
-        } else {
-          // wander：定期换方向
-          if (now > enemy.nextTurn) {
-            enemy.vx = (Math.random() - 0.5) * 3.2;
-            enemy.vy = (Math.random() - 0.5) * 3.2;
-            enemy.nextTurn = now + (450 + Math.random() * 1050);
+        let vx = 0, vy = 0;
+
+        if (enemy.mode === MODE_CHASE) {
+          const dx = px - enemy.x;
+          const dy = py - enemy.y;
+          const dist = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
+          vx = (dx / dist) * enemy.speed;
+          vy = (dy / dist) * enemy.speed;
+        }
+
+        if (enemy.mode === MODE_FLEE) {
+          const dx = enemy.x - px;
+          const dy = enemy.y - py;
+          const dist = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
+          // 离玩家太近就加速逃
+          const boost = dist < 180 ? 1.35 : 1.0;
+          vx = (dx / dist) * enemy.speed * boost;
+          vy = (dy / dist) * enemy.speed * boost;
+        }
+
+        if (enemy.mode === MODE_WANDER) {
+          enemy.wanderTimer -= 1;
+          if (enemy.wanderTimer <= 0) {
+            enemy.wanderTimer = 18 + Math.floor(Math.random() * 28);
+            const ang = Math.random() * Math.PI * 2;
+            const sp = enemy.speed * (0.55 + Math.random() * 0.75);
+            enemy.vx = Math.cos(ang) * sp;
+            enemy.vy = Math.sin(ang) * sp;
           }
-          enemy.x += enemy.vx * dt * 60;
-          enemy.y += enemy.vy * dt * 60;
+          vx = enemy.vx;
+          vy = enemy.vy;
 
-          // 边界反弹
+          // 偶尔轻微被玩家“吸引/排斥”一点点，让它更像活的
+          const dx = px - enemy.x;
+          const dy = py - enemy.y;
+          const dist = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
+          const bias = (Math.random() < 0.5 ? -1 : 1) * 0.25; // 随机偏向
+          vx += (dx / dist) * enemy.speed * 0.08 * bias;
+          vy += (dy / dist) * enemy.speed * 0.08 * bias;
+        }
+
+        enemy.x += vx;
+        enemy.y += vy;
+
+        // 边界反弹（游走更自然）
+        if (enemy.mode === MODE_WANDER) {
           if (enemy.x < -40 || enemy.x > canvas.width + 40) enemy.vx *= -1;
           if (enemy.y < -40 || enemy.y > canvas.height + 40) enemy.vy *= -1;
         }
 
-        // 5) 碰撞：扣血更少 + 冷却，避免瞬间暴毙
-        const cx = player.x - enemy.x;
-        const cy = player.y - enemy.y;
-        const cdist = Math.sqrt(cx * cx + cy * cy);
+        // 碰撞检测
+        const ddx = player.x - enemy.x;
+        const ddy = player.y - enemy.y;
+        const d = Math.sqrt(ddx * ddx + ddy * ddy);
+        if (d < player.size + enemy.size) {
+          // 扣血更少（休闲）
+          hp -= enemy.isBoss ? BOSS_DAMAGE : SMALL_DAMAGE;
+          hp = clamp(hp, 0, MAX_HP);
 
-        if (cdist < player.size + enemy.size) {
-          if (now - enemy.lastHit > HIT_COOLDOWN_MS) {
-            enemy.lastHit = now;
-            hp -= enemy.isBoss ? BOSS_DAMAGE : SMALL_DAMAGE;
-            hp = clamp(hp, 0, MAX_HP);
-          }
-
-          // 击杀逻辑：boss需要碰3次，普通碰1次就算“打败”
           if (enemy.isBoss) {
             enemy.hp--;
             if (enemy.hp <= 0) {
@@ -836,78 +946,81 @@
         }
       });
 
-      // 6) 难度：跟得分走（略慢一点）
-      difficulty = Math.floor(score / 140) + 1;
+      // 5) 难度：更慢更休闲
+      difficulty = Math.floor(score / 180) + 1;
 
-      // 7) 刷怪：更多 + 波动
-      const p = spawnChance(now);
-      // 单帧可能刷多个（波动更明显）
-      if (Math.random() < p) spawnEnemy();
-      if (Math.random() < p * 0.35) spawnEnemy(); // 偶尔双刷
+      // 6) 粒子更新
+      updateParticles();
+      updateCoinsVisual();
+      updateFloatTexts();
+      updateMood();
 
-      // 8) 视觉更新
-      updateParticles(dt);
-      updateCoinParticles(dt);
-      updateFloatTexts(dt);
+      // 7) 台词
+      updateDialog();
 
-      // 9) 台词 + 奶瓶 + 表情
-      updateDialog(now);
-      updateMilk(now);
-      updateMood(now);
+      // 8) 奶瓶：不断出现/消失（最多5个）
+      // 出现更频繁：越后期越勤奋（更快产奶）
+      const spawnInterval = Math.max(0.45, 1.15 - secondsSurvived / 420); // 秒
+      const despawnInterval = Math.max(0.8, 1.8 - secondsSurvived / 620); // 秒
 
-      // 10) UI
-      document.getElementById('daysLeft').textContent = Math.max(0, Math.floor(daysLeft));
+      bottleSpawnTimer += 1/60;
+      bottleDespawnTimer += 1/60;
+
+      if (bottleSpawnTimer >= spawnInterval) {
+        bottleSpawnTimer = 0;
+        spawnBottleFromRight();
+      }
+      if (bottleDespawnTimer >= despawnInterval) {
+        bottleDespawnTimer = 0;
+        despawnBottleFromLeft();
+      }
+      renderBottles();
+
+      // 9) UI
+      document.getElementById('daysLeft').textContent = Math.floor(daysLeft);
       document.getElementById('hp').textContent = Math.floor(hp);
       document.getElementById('difficulty').textContent = difficulty;
       document.getElementById('coinScore').textContent = coinScore;
 
-      // 11) 结束：寿命归零或HP归零
+      // 10) 游戏结束：寿命或HP归零
       if (daysLeft <= 0 || hp <= 0) gameOver();
     }
 
-    // ====== 绘制 ======
     function draw() {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 流汗：疲惫/濒危时更明显
-      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.32) {
+      // 流汗：更轻微（休闲）
+      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.22) {
         ctx.fillStyle = '#87CEEB';
         ctx.beginPath();
-        ctx.arc(player.x - player.size * 0.85, player.y - player.size * 0.5, 3, 0, Math.PI * 2);
+        ctx.arc(player.x - player.size * 0.8, player.y - player.size * 0.5, 3, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 玩家
       drawCow(player.x, player.y, player.size, player.mood);
 
-      // 敌人
       enemies.forEach(enemy => {
         if (enemy.isBoss) drawBoss(enemy.x, enemy.y, enemy.size);
         else drawHorse(enemy.x, enemy.y, enemy.size);
       });
 
       drawParticles();
-      drawCoinParticles();
+      drawCoinsVisual();
       drawFloatTexts();
     }
 
-    // ====== 主循环 ======
-    function gameLoop(now) {
-      const dt = Math.min(0.033, Math.max(0.008, (now - lastFrameTime) / 1000));
-      lastFrameTime = now;
-
-      update(now, dt);
+    function gameLoop() {
+      update();
       draw();
       requestAnimationFrame(gameLoop);
     }
 
-    // ====== 结束/重开 ======
     function gameOver() {
       gameRunning = false;
       document.getElementById('finalScore').textContent = score;
       document.getElementById('finalCoins').textContent = coinScore;
-      document.getElementById('finalSeconds').textContent = Math.floor(secondsSurvived);
+      document.getElementById('finalSeconds').textContent = secondsSurvived;
       gameOverPanel.style.display = 'block';
     }
 
@@ -922,7 +1035,7 @@
 
       enemies = [];
       particles = [];
-      coinParticles = [];
+      coinsVisual = [];
       floatTexts = [];
 
       daysLeft = INITIAL_DAYS;
@@ -930,28 +1043,24 @@
       score = 0;
       coinScore = 0;
       difficulty = 1;
-
       secondsSurvived = 0;
-      lastFrameTime = performance.now();
 
+      lastSecondTick = performance.now();
       lastDialogTime = 0;
+
       dialogBox.style.display = "none";
-      if (dialogHideTimer) {
-        clearTimeout(dialogHideTimer);
-        dialogHideTimer = null;
-      }
+      if (dialogHideTimer) { clearTimeout(dialogHideTimer); dialogHideTimer = null; }
 
       // 奶瓶重置
-      milkCount = 0;
-      milkAppearTimer = 0;
-      milkVanishTimer = 0;
-      renderMilkBar();
+      bottles = [0,0,0,0,0];
+      bottleSpawnTimer = 0;
+      bottleDespawnTimer = 0;
+      renderBottles();
 
       gameRunning = true;
       gameOverPanel.style.display = 'none';
     }
 
-    // ====== 控制 ======
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       player.targetX = e.clientX - rect.left;
@@ -968,9 +1077,11 @@
 
     restartBtn.addEventListener('click', restart);
 
-    // ====== 开始 ======
-    renderMilkBar();
-    requestAnimationFrame(gameLoop);
+    // 初始化奶瓶架外观
+    renderBottles();
+
+    // 开始
+    gameLoop();
   </script>
 </body>
 </html>
