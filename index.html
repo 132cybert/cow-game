@@ -1,549 +1,658 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>牛马生存法则</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        
-        #gameInfo {
-            position: absolute;
-            top: 20px;
-            width: 90%;
-            max-width: 600px;
-            display: flex;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px 25px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            color: #e0f7fa;
-            font-size: 18px;
-            font-weight: bold;
-            z-index: 10;
-        }
-        
-        #gameCanvas {
-            border: 2px solid rgba(173, 216, 230, 0.5);
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        #gameOverPanel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(30, 30, 50, 0.9);
-            padding: 40px;
-            border-radius: 25px;
-            text-align: center;
-            display: none;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            z-index: 100;
-            min-width: 300px;
-        }
-        
-        #gameOverPanel h2 {
-            color: #e0f7fa;
-            font-size: 36px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
-        }
-        
-        #gameOverPanel p {
-            color: #bbdefb;
-            font-size: 20px;
-            margin: 10px 0;
-        }
-        
-        #restartBtn {
-            margin-top: 25px;
-            padding: 15px 40px;
-            font-size: 18px;
-            background: linear-gradient(45deg, #00c9ff, #92fe9d);
-            color: #0a1929;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 201, 255, 0.4);
-        }
-        
-        #restartBtn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0, 201, 255, 0.6);
-        }
-        
-        .particle {
-            position: absolute;
-            pointer-events: none;
-            border-radius: 50%;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>职场生存法则</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #gameInfo {
+      position: absolute;
+      top: 20px;
+      width: 92%;
+      max-width: 720px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 14px 22px;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #e0f7fa;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+
+    #gameInfo > div { white-space: nowrap; }
+
+    #gameCanvas {
+      border: 2px solid rgba(173, 216, 230, 0.5);
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      touch-action: none;
+    }
+
+    #gameOverPanel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 50, 0.9);
+      padding: 38px;
+      border-radius: 22px;
+      text-align: center;
+      display: none;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      z-index: 100;
+      min-width: 320px;
+    }
+
+    #gameOverPanel h2 {
+      color: #e0f7fa;
+      font-size: 34px;
+      margin-bottom: 16px;
+      text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
+    }
+
+    #gameOverPanel p {
+      color: #bbdefb;
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    #restartBtn {
+      margin-top: 22px;
+      padding: 14px 38px;
+      font-size: 16px;
+      background: linear-gradient(45deg, #00c9ff, #92fe9d);
+      color: #0a1929;
+      border: none;
+      border-radius: 28px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0, 201, 255, 0.4);
+    }
+
+    #restartBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 201, 255, 0.6);
+    }
+  </style>
 </head>
 <body>
-    <div id="gameInfo">
-        <div>剩余寿命: <span id="life">21346</span> 天</div>
-        <div>难度: <span id="difficulty">1</span></div>
-    </div>
-    
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    
-    <div id="gameOverPanel">
-        <h2>游戏结束！</h2>
-        <p>最终得分: <span id="finalScore">0</span></p>
-        <p>累计获取寿命: <span id="totalLife">0</span> 天</p>
-        <button id="restartBtn">重新开始</button>
-    </div>
+  <div id="gameInfo">
+    <div>剩余寿命: <span id="life">21346</span> 天</div>
+    <div>难度: <span id="difficulty">1</span></div>
+    <div>金币积分: <span id="coinScore">0</span></div>
+    <div>存活时间: <span id="timeSurvived">0</span>s</div>
+  </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const gameOverPanel = document.getElementById('gameOverPanel');
-        const restartBtn = document.getElementById('restartBtn');
-        
-        let player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            size: 30,
-            speed: 5,
-            targetX: canvas.width / 2,
-            targetY: canvas.height / 2
-        };
-        
-        let enemies = [];
-        let particles = [];
-        let coins = [];
-        let life = 21346;
-        let score = 0;
-        let difficulty = 1;
-        let gameRunning = true;
-        let totalLifeGained = 0;
-        
-        // 绘制奶牛角色
-        function drawCow(x, y, size) {
-            // 身体
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.ellipse(x, y, size, size * 0.8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 斑点
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.ellipse(x - size * 0.3, y - size * 0.2, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + size * 0.2, y + size * 0.3, size * 0.2, size * 0.15, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 头部
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 眼睛（疲惫的眼神）
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.ellipse(x - size * 0.3, y - size * 0.8, size * 0.08, size * 0.05, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + size * 0.3, y - size * 0.8, size * 0.08, size * 0.05, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 嘴巴
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(x, y - size * 0.6, size * 0.2, 0, Math.PI);
-            ctx.stroke();
-            
-            // 耳朵
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.ellipse(x - size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, -0.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, 0.5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 角
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(x - size * 0.2, y - size * 1.1);
-            ctx.lineTo(x - size * 0.15, y - size * 1.3);
-            ctx.moveTo(x + size * 0.2, y - size * 1.1);
-            ctx.lineTo(x + size * 0.15, y - size * 1.3);
-            ctx.stroke();
-        }
-        
-        // 绘制小马敌人
-        function drawHorse(x, y, size) {
-            // 身体
-            ctx.fillStyle = '#8B4513';
-            ctx.beginPath();
-            ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 头部
-            ctx.beginPath();
-            ctx.ellipse(x, y - size * 0.6, size * 0.5, size * 0.6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 鬃毛
-            ctx.fillStyle = '#654321';
-            ctx.beginPath();
-            ctx.ellipse(x, y - size * 0.8, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 眼睛
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.ellipse(x - size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 腿
-            ctx.strokeStyle = '#8B4513';
-            ctx.lineWidth = size * 0.15;
-            ctx.beginPath();
-            ctx.moveTo(x - size * 0.3, y + size * 0.3);
-            ctx.lineTo(x - size * 0.3, y + size * 0.8);
-            ctx.moveTo(x + size * 0.3, y + size * 0.3);
-            ctx.lineTo(x + size * 0.3, y + size * 0.8);
-            ctx.stroke();
-        }
-        
-        // 绘制Boss
-        function drawBoss(x, y, size) {
-            // 头部（凶巴巴的脸）
-            ctx.fillStyle = '#FF6B6B';
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 愤怒的眼睛
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.ellipse(x - size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 眉毛
-            ctx.strokeStyle = '#8B0000';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(x - size * 0.6, y - size * 0.4);
-            ctx.lineTo(x - size * 0.2, y - size * 0.3);
-            ctx.moveTo(x + size * 0.6, y - size * 0.4);
-            ctx.lineTo(x + size * 0.2, y - size * 0.3);
-            ctx.stroke();
-            
-            // 嘴巴
-            ctx.strokeStyle = '#8B0000';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(x, y + size * 0.2, size * 0.3, 0, Math.PI);
-            ctx.stroke();
-        }
-        
-        // 绘制金币
-        function drawCoin(x, y, size) {
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#FFA500';
-            ctx.beginPath();
-            ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#FFD700';
-            ctx.font = `bold ${size}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('¥', x, y);
-        }
-        
-        // 创建粒子效果
-        function createParticles(x, y, color, count) {
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
-                    size: Math.random() * 5 + 2,
-                    color: color,
-                    life: 1
-                });
-            }
-        }
-        
-        // 创建金币
-        function createCoins(x, y) {
-            for (let i = 0; i < 5; i++) {
-                coins.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 5,
-                    vy: -Math.random() * 5 - 2,
-                    size: 15,
-                    life: 1
-                });
-            }
-        }
-        
-        // 更新粒子
-        function updateParticles() {
-            particles = particles.filter(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.5;
-                p.life -= 0.02;
-                p.size *= 0.98;
-                return p.life > 0;
-            });
-        }
-        
-        // 更新金币
-        function updateCoins() {
-            coins = coins.filter(c => {
-                c.x += c.vx;
-                c.y += c.vy;
-                c.vy += 0.3;
-                c.life -= 0.01;
-                return c.life > 0;
-            });
-        }
-        
-        // 绘制粒子
-        function drawParticles() {
-            particles.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1;
-        }
-        
-        // 绘制金币
-        function drawCoins() {
-            coins.forEach(c => {
-                ctx.globalAlpha = c.life;
-                drawCoin(c.x, c.y, c.size);
-            });
-            ctx.globalAlpha = 1;
-        }
-        
-        // 生成敌人
-        function spawnEnemy() {
-            const side = Math.floor(Math.random() * 4);
-            let x, y;
-            
-            switch(side) {
-                case 0: x = Math.random() * canvas.width; y = -50; break;
-                case 1: x = canvas.width + 50; y = Math.random() * canvas.height; break;
-                case 2: x = Math.random() * canvas.width; y = canvas.height + 50; break;
-                case 3: x = -50; y = Math.random() * canvas.height; break;
-            }
-            
-            const isBoss = Math.random() < 0.1;
-            enemies.push({
-                x: x,
-                y: y,
-                size: isBoss ? 40 : 25,
-                speed: isBoss ? 2 : 3 + difficulty * 0.5,
-                isBoss: isBoss,
-                hp: isBoss ? 3 : 1
-            });
-        }
-        
-        // 更新游戏
-        function update() {
-            if (!gameRunning) return;
-            
-            // 更新玩家位置
-            const dx = player.targetX - player.x;
-            const dy = player.targetY - player.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 5) {
-                player.x += (dx / distance) * player.speed;
-                player.y += (dy / distance) * player.speed;
-            }
-            
-            // 更新敌人
-            enemies.forEach((enemy, index) => {
-                const dx = player.x - enemy.x;
-                const dy = player.y - enemy.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                enemy.x += (dx / distance) * enemy.speed;
-                enemy.y += (dy / distance) * enemy.speed;
-                
-                // 检测碰撞
-                if (distance < player.size + enemy.size) {
-                    if (enemy.isBoss) {
-                        enemy.hp--;
-                        if (enemy.hp <= 0) {
-                            life += 10;
-                            totalLifeGained += 10;
-                            score += 100;
-                            createParticles(enemy.x, enemy.y, '#FFD700', 30);
-                            createCoins(enemy.x, enemy.y);
-                            enemies.splice(index, 1);
-                        }
-                    } else {
-                        life += 1;
-                        totalLifeGained += 1;
-                        score += 10;
-                        createParticles(enemy.x, enemy.y, '#00FF00', 20);
-                        enemies.splice(index, 1);
-                    }
-                }
-            });
-            
-            // 更新难度
-            difficulty = Math.floor(score / 100) + 1;
-            
-            // 生成新敌人
-            if (Math.random() < 0.02 * difficulty) {
-                spawnEnemy();
-            }
-            
-            // 更新粒子和金币
-            updateParticles();
-            updateCoins();
-            
-            // 更新UI
-            document.getElementById('life').textContent = life;
-            document.getElementById('difficulty').textContent = difficulty;
-            
-            // 检查游戏结束
-            if (life <= 0) {
-                gameOver();
-            }
-        }
-        
-        // 绘制游戏
-        function draw() {
-            // 清空画布
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 绘制玩家流汗效果
-            if (Math.random() < 0.3) {
-                ctx.fillStyle = '#87CEEB';
-                ctx.beginPath();
-                ctx.arc(player.x - player.size * 0.8, player.y - player.size * 0.5, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(player.x + player.size * 0.8, player.y - player.size * 0.3, 3, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // 绘制玩家
-            drawCow(player.x, player.y, player.size);
-            
-            // 绘制敌人
-            enemies.forEach(enemy => {
-                if (enemy.isBoss) {
-                    drawBoss(enemy.x, enemy.y, enemy.size);
-                } else {
-                    drawHorse(enemy.x, enemy.y, enemy.size);
-                }
-            });
-            
-            // 绘制粒子和金币
-            drawParticles();
-            drawCoins();
-        }
-        
-        // 游戏循环
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // 游戏结束
-        function gameOver() {
-            gameRunning = false;
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('totalLife').textContent = totalLifeGained;
-            gameOverPanel.style.display = 'block';
-        }
-        
-        // 重新开始
-        function restart() {
-            player.x = canvas.width / 2;
-            player.y = canvas.height / 2;
-            player.targetX = canvas.width / 2;
-            player.targetY = canvas.height / 2;
-            enemies = [];
-            particles = [];
-            coins = [];
-            life = 21346;
-            score = 0;
-            difficulty = 1;
-            totalLifeGained = 0;
-            gameRunning = true;
-            gameOverPanel.style.display = 'none';
-        }
-        
-        // 鼠标/触摸控制
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            player.targetX = e.clientX - rect.left;
-            player.targetY = e.clientY - rect.top;
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+  <div id="gameOverPanel">
+    <h2>职场生存结束！</h2>
+    <p>最终得分: <span id="finalScore">0</span></p>
+    <p>累计获取寿命: <span id="totalLife">0</span> 天</p>
+    <p>金币积分: <span id="finalCoins">0</span></p>
+    <button id="restartBtn">重新开始</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameOverPanel = document.getElementById('gameOverPanel');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // ====== 核心参数 ======
+    const INITIAL_LIFE = 21346;
+    const LIFE_DECAY_PER_SEC = 1; // 每秒倒数 1 天（你可以调成 0.2 / 2 / 5）
+    const SMALL_ENEMY_LIFE_GAIN = 1;
+    const BOSS_LIFE_GAIN = 10;
+
+    const SMALL_ENEMY_COIN = 1;
+    const BOSS_COIN = 5;
+
+    let player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      size: 30,
+      speed: 5,
+      targetX: canvas.width / 2,
+      targetY: canvas.height / 2,
+      mood: "calm",          // calm | tired | critical | happy
+      happyUntil: 0          // 时间戳：开心表情持续到什么时候
+    };
+
+    let enemies = [];
+    let particles = [];
+    let coins = [];          // 视觉金币粒子（不需要拾取也会计分）
+    let floatTexts = [];     // 浮动文字 +1天 / +5金币
+    let life = INITIAL_LIFE;
+    let score = 0;
+    let difficulty = 1;
+    let gameRunning = true;
+    let totalLifeGained = 0;
+    let coinScore = 0;
+
+    // 时间控制：用 deltaTime 做稳定倒计时
+    let lastTs = performance.now();
+    let lifeDecayAcc = 0;
+    let timeSurvived = 0;
+
+    // ====== 绘制：奶牛（表情随 mood 变化）======
+    function drawCow(x, y, size, mood) {
+      // 身体
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size, size * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 斑点
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.3, y - size * 0.2, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y + size * 0.3, size * 0.2, size * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 头部
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 眼睛 / 眼神
+      ctx.fillStyle = '#000000';
+      const eyeW = size * 0.08;
+      const eyeH = (mood === "tired" ? size * 0.035 : mood === "critical" ? size * 0.025 : size * 0.05);
+      const eyeY = y - size * 0.8;
+
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 眼袋（疲惫/濒危）
+      if (mood === "tired" || mood === "critical") {
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x - size * 0.3, eyeY + size * 0.08, size * 0.08, 0, Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + size * 0.3, eyeY + size * 0.08, size * 0.08, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      // 嘴巴（情绪变化）
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (mood === "happy") {
+        // 微笑
+        ctx.arc(x, y - size * 0.62, size * 0.22, 0, Math.PI);
+      } else if (mood === "critical") {
+        // 反向小哭脸
+        ctx.arc(x, y - size * 0.52, size * 0.20, Math.PI, Math.PI * 2);
+      } else if (mood === "tired") {
+        // 平直嘴
+        ctx.moveTo(x - size * 0.22, y - size * 0.58);
+        ctx.lineTo(x + size * 0.22, y - size * 0.58);
+      } else {
+        // calm：轻微微笑
+        ctx.arc(x, y - size * 0.60, size * 0.18, 0, Math.PI);
+      }
+      ctx.stroke();
+
+      // 耳朵
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 角
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.2, y - size * 1.1);
+      ctx.lineTo(x - size * 0.15, y - size * 1.3);
+      ctx.moveTo(x + size * 0.2, y - size * 1.1);
+      ctx.lineTo(x + size * 0.15, y - size * 1.3);
+      ctx.stroke();
+    }
+
+    // 小马敌人
+    function drawHorse(x, y, size) {
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.6, size * 0.5, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#654321';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.8, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#8B4513';
+      ctx.lineWidth = size * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.3, y + size * 0.3);
+      ctx.lineTo(x - size * 0.3, y + size * 0.8);
+      ctx.moveTo(x + size * 0.3, y + size * 0.3);
+      ctx.lineTo(x + size * 0.3, y + size * 0.8);
+      ctx.stroke();
+    }
+
+    // Boss
+    function drawBoss(x, y, size) {
+      ctx.fillStyle = '#FF6B6B';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#8B0000';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.6, y - size * 0.4);
+      ctx.lineTo(x - size * 0.2, y - size * 0.3);
+      ctx.moveTo(x + size * 0.6, y - size * 0.4);
+      ctx.lineTo(x + size * 0.2, y - size * 0.3);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#8B0000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y + size * 0.2, size * 0.3, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    // 金币（视觉）
+    function drawCoin(x, y, size) {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFA500';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${size}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('¥', x, y);
+    }
+
+    // 粒子
+    function createParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.5) * 10,
+          size: Math.random() * 5 + 2,
+          color,
+          life: 1
         });
-        
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            player.targetX = touch.clientX - rect.left;
-            player.targetY = touch.clientY - rect.top;
+      }
+    }
+
+    // 视觉金币喷射
+    function createCoins(x, y, n = 5) {
+      for (let i = 0; i < n; i++) {
+        coins.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 5,
+          vy: -Math.random() * 5 - 2,
+          size: 14,
+          life: 1
         });
-        
-        restartBtn.addEventListener('click', restart);
-        
-        // 开始游戏
-        gameLoop();
-    </script>
+      }
+    }
+
+    // 浮动文字（+寿命/+金币）
+    function addFloatText(x, y, text, color = "#e0f7fa") {
+      floatTexts.push({
+        x, y,
+        text,
+        color,
+        vy: -1.2,
+        life: 1
+      });
+    }
+
+    function updateParticles(dt) {
+      particles = particles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.5;
+        p.life -= 0.02;
+        p.size *= 0.98;
+        return p.life > 0;
+      });
+    }
+
+    function updateCoins(dt) {
+      coins = coins.filter(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vy += 0.3;
+        c.life -= 0.01;
+        return c.life > 0;
+      });
+    }
+
+    function updateFloatTexts(dt) {
+      floatTexts = floatTexts.filter(t => {
+        t.y += t.vy;
+        t.life -= 0.02;
+        return t.life > 0;
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawCoins() {
+      coins.forEach(c => {
+        ctx.globalAlpha = c.life;
+        drawCoin(c.x, c.y, c.size);
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawFloatTexts() {
+      floatTexts.forEach(t => {
+        ctx.globalAlpha = t.life;
+        ctx.fillStyle = t.color;
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(t.text, t.x, t.y);
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // 生成敌人
+    function spawnEnemy() {
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      switch (side) {
+        case 0: x = Math.random() * canvas.width; y = -50; break;
+        case 1: x = canvas.width + 50; y = Math.random() * canvas.height; break;
+        case 2: x = Math.random() * canvas.width; y = canvas.height + 50; break;
+        case 3: x = -50; y = Math.random() * canvas.height; break;
+      }
+
+      const isBoss = Math.random() < 0.1;
+      enemies.push({
+        x, y,
+        size: isBoss ? 40 : 25,
+        speed: isBoss ? 2 : 3 + difficulty * 0.5,
+        isBoss,
+        hp: isBoss ? 3 : 1
+      });
+    }
+
+    // 根据寿命状态更新表情
+    function updateMood(now) {
+      if (now < player.happyUntil) {
+        player.mood = "happy";
+        return;
+      }
+      const ratio = life / INITIAL_LIFE;
+      if (life <= 300) player.mood = "critical";
+      else if (ratio < 0.35 || difficulty >= 6) player.mood = "tired";
+      else player.mood = "calm";
+    }
+
+    function grantReward(enemy, x, y) {
+      if (enemy.isBoss) {
+        life += BOSS_LIFE_GAIN;
+        totalLifeGained += BOSS_LIFE_GAIN;
+        score += 100;
+
+        coinScore += BOSS_COIN;
+        createCoins(x, y, 8);
+        addFloatText(x, y - 10, `+${BOSS_LIFE_GAIN}天`, "#92fe9d");
+        addFloatText(x, y + 12, `+${BOSS_COIN}金币`, "#FFD700");
+
+      } else {
+        life += SMALL_ENEMY_LIFE_GAIN;
+        totalLifeGained += SMALL_ENEMY_LIFE_GAIN;
+        score += 10;
+
+        coinScore += SMALL_ENEMY_COIN;
+        createCoins(x, y, 4);
+        addFloatText(x, y - 10, `+${SMALL_ENEMY_LIFE_GAIN}天`, "#92fe9d");
+        addFloatText(x, y + 12, `+${SMALL_ENEMY_COIN}金币`, "#FFD700");
+      }
+
+      // 开心表情短暂出现 0.8 秒
+      player.happyUntil = performance.now() + 800;
+    }
+
+    function update(dt, now) {
+      if (!gameRunning) return;
+
+      // 倒数寿命：按秒扣
+      lifeDecayAcc += dt;
+      while (lifeDecayAcc >= 1000) {
+        life -= LIFE_DECAY_PER_SEC;
+        timeSurvived += 1;
+        lifeDecayAcc -= 1000;
+        if (life <= 0) {
+          life = 0;
+          break;
+        }
+      }
+
+      // 更新玩家位置
+      const dx = player.targetX - player.x;
+      const dy = player.targetY - player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 4) {
+        player.x += (dx / dist) * player.speed;
+        player.y += (dy / dist) * player.speed;
+      }
+
+      // 更新敌人追击 + 碰撞处理
+      enemies.forEach((enemy, index) => {
+        const ex = player.x - enemy.x;
+        const ey = player.y - enemy.y;
+        const d = Math.sqrt(ex * ex + ey * ey);
+
+        enemy.x += (ex / d) * enemy.speed;
+        enemy.y += (ey / d) * enemy.speed;
+
+        if (d < player.size + enemy.size) {
+          if (enemy.isBoss) {
+            enemy.hp--;
+            if (enemy.hp <= 0) {
+              createParticles(enemy.x, enemy.y, '#FFD700', 30);
+              grantReward(enemy, enemy.x, enemy.y);
+              enemies.splice(index, 1);
+            }
+          } else {
+            createParticles(enemy.x, enemy.y, '#00FF88', 20);
+            grantReward(enemy, enemy.x, enemy.y);
+            enemies.splice(index, 1);
+          }
+        }
+      });
+
+      // 难度随 score 增长
+      difficulty = Math.floor(score / 100) + 1;
+
+      // 生成新敌人（随难度增加）
+      const spawnChance = Math.min(0.18, 0.02 * difficulty);
+      if (Math.random() < spawnChance) spawnEnemy();
+
+      updateParticles(dt);
+      updateCoins(dt);
+      updateFloatTexts(dt);
+      updateMood(now);
+
+      // UI
+      document.getElementById('life').textContent = Math.max(0, Math.floor(life));
+      document.getElementById('difficulty').textContent = difficulty;
+      document.getElementById('coinScore').textContent = coinScore;
+      document.getElementById('timeSurvived').textContent = timeSurvived;
+
+      if (life <= 0) gameOver();
+    }
+
+    function draw() {
+      // 清空（带拖尾）
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 玩家流汗（紧张时更明显）
+      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.35) {
+        ctx.fillStyle = '#87CEEB';
+        ctx.beginPath();
+        ctx.arc(player.x - player.size * 0.8, player.y - player.size * 0.5, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 画玩家
+      drawCow(player.x, player.y, player.size, player.mood);
+
+      // 画敌人
+      enemies.forEach(enemy => {
+        if (enemy.isBoss) drawBoss(enemy.x, enemy.y, enemy.size);
+        else drawHorse(enemy.x, enemy.y, enemy.size);
+      });
+
+      // 画粒子 / 金币 / 浮字
+      drawParticles();
+      drawCoins();
+      drawFloatTexts();
+    }
+
+    function gameLoop(ts) {
+      const dt = ts - lastTs;
+      lastTs = ts;
+
+      update(dt, ts);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('totalLife').textContent = totalLifeGained;
+      document.getElementById('finalCoins').textContent = coinScore;
+      gameOverPanel.style.display = 'block';
+    }
+
+    function restart() {
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      player.targetX = canvas.width / 2;
+      player.targetY = canvas.height / 2;
+      player.mood = "calm";
+      player.happyUntil = 0;
+
+      enemies = [];
+      particles = [];
+      coins = [];
+      floatTexts = [];
+
+      life = INITIAL_LIFE;
+      score = 0;
+      difficulty = 1;
+      totalLifeGained = 0;
+      coinScore = 0;
+
+      lastTs = performance.now();
+      lifeDecayAcc = 0;
+      timeSurvived = 0;
+
+      gameRunning = true;
+      gameOverPanel.style.display = 'none';
+    }
+
+    // 鼠标/触摸控制
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      player.targetX = e.clientX - rect.left;
+      player.targetY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      player.targetX = touch.clientX - rect.left;
+      player.targetY = touch.clientY - rect.top;
+    }, { passive: false });
+
+    restartBtn.addEventListener('click', restart);
+
+    // 开始
+    requestAnimationFrame((ts) => {
+      lastTs = ts;
+      gameLoop(ts);
+    });
+  </script>
 </body>
 </html>
