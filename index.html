@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>职场主角升级模拟器</title>
+  <title>职场模拟器：从实习生到诸天万界总裁</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,7 +14,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       overflow: hidden;
     }
 
@@ -22,7 +22,7 @@
       position: absolute;
       top: 20px;
       width: 90%;
-      max-width: 760px;
+      max-width: 820px;
       display: flex;
       justify-content: space-between;
       gap: 10px;
@@ -48,6 +48,27 @@
       touch-action: none;
     }
 
+    /* 对话框 */
+    #dialogBox {
+      position: absolute;
+      bottom: 38px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      color: #e0f7fa;
+      padding: 14px 22px;
+      border-radius: 20px;
+      font-size: 16px;
+      max-width: min(820px, 78%);
+      text-align: center;
+      display: none;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(0, 200, 255, 0.35);
+      border: 1px solid rgba(255,255,255,0.16);
+      line-height: 1.45;
+      z-index: 50;
+    }
+
     #gameOverPanel {
       position: absolute;
       top: 50%;
@@ -62,14 +83,22 @@
       backdrop-filter: blur(15px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       z-index: 100;
-      min-width: 320px;
+      min-width: 340px;
     }
 
     #gameOverPanel h2 {
       color: #e0f7fa;
-      font-size: 32px;
-      margin-bottom: 16px;
+      font-size: 30px;
+      margin-bottom: 10px;
       text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
+      line-height: 1.25;
+    }
+
+    #gameOverPanel .subtitle {
+      color: rgba(224, 247, 250, 0.8);
+      font-size: 14px;
+      margin-bottom: 18px;
+      letter-spacing: 0.2px;
     }
 
     #gameOverPanel p {
@@ -109,8 +138,12 @@
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
+  <!-- 对话框 -->
+  <div id="dialogBox"></div>
+
   <div id="gameOverPanel">
-    <h2>职场主角：本局结束</h2>
+    <h2>职场模拟器：本轮历练结束</h2>
+    <div class="subtitle">Corporate Ascension Simulator — From Intern to Multiverse CEO</div>
     <p>最终得分: <span id="finalScore">0</span></p>
     <p>金币积分: <span id="finalCoins">0</span></p>
     <p>存活时长: <span id="finalSeconds">0</span> 秒</p>
@@ -122,12 +155,13 @@
     const ctx = canvas.getContext('2d');
     const gameOverPanel = document.getElementById('gameOverPanel');
     const restartBtn = document.getElementById('restartBtn');
+    const dialogBox = document.getElementById('dialogBox');
 
     // ====== 核心资源：寿命(不可恢复) + HP(可恢复) ======
     const INITIAL_DAYS = 21346;
     const MAX_HP = 100;
 
-    const DAYS_DECAY_PER_SEC = 1;   // 每秒寿命 -1 天（你想更狠就改成2）
+    const DAYS_DECAY_PER_SEC = 1;   // 每秒寿命 -1 天（想更残酷就改成2）
     const SMALL_DAMAGE = 8;         // 小怪贴脸扣血
     const BOSS_DAMAGE = 18;         // Boss贴脸扣血
 
@@ -165,6 +199,105 @@
     let lastSecondTick = performance.now();
     let secondsSurvived = 0;
 
+    // ====== 台词系统（早/中/后）======
+    const earlyLines = [
+      "第一天上班……为什么空气都这么压抑。",
+      "我是不是选错专业了？",
+      "再坚持一下……也许明年会涨薪。",
+      "为什么他们都跑得比我快？",
+      "这任务真的合理吗？",
+      "今天又要加班吗？",
+      "好累……但不敢停。",
+      "别人好像都很厉害。",
+      "是不是只有我不会？",
+      "先活下来再说。",
+      "老板看我一眼，我血压就上来了。",
+      "努力是不是一定有用？",
+      "我只是想按时下班。",
+      "怎么又改需求？",
+      "我只是个实习生啊……",
+      "我能不能……先喝口水再崩溃。",
+      "会议像黑洞：吞噬时间，吐出KPI。",
+      "我在工位上学会了瞬移：从周一瞬到周五。"
+    ];
+
+    const midLines = [
+      "原来规则不是写给我这种人的。",
+      "我开始看懂他们的逻辑了。",
+      "原来权力，是结构。",
+      "原来不是我不行，是游戏有问题。",
+      "我不再焦虑，我开始计算。",
+      "他们怕的不是我努力，是我清醒。",
+      "资源流向强者。",
+      "我开始收集变量。",
+      "情绪是成本。",
+      "耐心，是我的武器。",
+      "我已经不一样了。",
+      "再等一会儿。",
+      "今天我不反驳，我只记录。",
+      "当我不再解释，我就开始赢。",
+      "我把加班当训练：练的是心硬。"
+    ];
+
+    // 你给的“后期爽文系统台词”（轻微排版润色）
+    const lateLines = [
+      "五年前，我在底层挨耳光；五年后，我坐在董事办公室——这一巴掌，利息十亿。",
+      "年会抽中了特等奖：总裁体验卡（永久）。",
+      "【恭喜宿主完成十万次摸鱼签到，奖励：整个集团控股权】",
+      "带薪拉屎的我，拉出一座商业帝国。",
+      "这栋楼太小，本座的目标是收购因果律。",
+      "本座之言，便是群公告；本座之怒，便是服务器崩溃！",
+      "曾经我为PPT动画加班秃头，如今我的PPT自带天道威压，投资人看了当场打款十个亿！",
+      "我即天道，我即规则，我即职场本身！",
+      "签到一百年，我成了职场天道。",
+      "我有一剑，可斩星辰；我有一键，可让全楼断电！",
+      "被裁员那天，我绑定了职场神豪系统。",
+      "天若阻我，我便不出门；地若拦我，我便收购这地！"
+    ];
+
+    // 对话频率控制
+    let lastDialogTime = 0;
+    const DIALOG_MIN_INTERVAL_MS = 8000; // 至少 8 秒一次
+    const DIALOG_SHOW_MS = 3200;         // 显示时长
+    let dialogHideTimer = null;
+
+    function showDialog(text) {
+      // 清理旧计时器，避免重叠
+      if (dialogHideTimer) {
+        clearTimeout(dialogHideTimer);
+        dialogHideTimer = null;
+      }
+      dialogBox.textContent = text;
+      dialogBox.style.display = "block";
+      dialogHideTimer = setTimeout(() => {
+        dialogBox.style.display = "none";
+      }, DIALOG_SHOW_MS);
+    }
+
+    function randomLine(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // 触发规则：按生存时间分段（你可以改成按difficulty/score）
+    function updateDialog() {
+      const now = performance.now();
+      if (now - lastDialogTime < DIALOG_MIN_INTERVAL_MS) return;
+
+      // 一点“概率”，避免太密集：早期更常见，后期稍微稀一点更像“天道发言”
+      const chance = secondsSurvived < 60 ? 0.75 : (secondsSurvived < 180 ? 0.6 : 0.45);
+      if (Math.random() > chance) return;
+
+      if (secondsSurvived < 60) {
+        showDialog(randomLine(earlyLines));
+      } else if (secondsSurvived < 180) {
+        showDialog(randomLine(midLines));
+      } else {
+        showDialog(randomLine(lateLines));
+      }
+
+      lastDialogTime = now;
+    }
+
     // ====== 绘制：奶牛（带表情）======
     function drawCow(x, y, size, mood) {
       // 身体
@@ -193,8 +326,8 @@
       const eyeW = size * 0.08;
       const eyeH =
         mood === "critical" ? size * 0.025 :
-          mood === "tired" ? size * 0.035 :
-            size * 0.05;
+        mood === "tired" ? size * 0.035 :
+        size * 0.05;
       const eyeY = y - size * 0.8;
 
       ctx.beginPath();
@@ -560,13 +693,16 @@
       updateFloatTexts();
       updateMood();
 
-      // 7) 更新UI
+      // 7) 台词系统更新（放在UI前后都行）
+      updateDialog();
+
+      // 8) 更新UI
       document.getElementById('daysLeft').textContent = Math.floor(daysLeft);
       document.getElementById('hp').textContent = Math.floor(hp);
       document.getElementById('difficulty').textContent = difficulty;
       document.getElementById('coinScore').textContent = coinScore;
 
-      // 8) 游戏结束：寿命归零 或 HP归零
+      // 9) 游戏结束：寿命归零 或 HP归零
       if (daysLeft <= 0 || hp <= 0) {
         gameOver();
       }
@@ -638,6 +774,13 @@
       secondsSurvived = 0;
 
       lastSecondTick = performance.now();
+      lastDialogTime = 0;
+      dialogBox.style.display = "none";
+      if (dialogHideTimer) {
+        clearTimeout(dialogHideTimer);
+        dialogHideTimer = null;
+      }
+
       gameRunning = true;
       gameOverPanel.style.display = 'none';
     }
