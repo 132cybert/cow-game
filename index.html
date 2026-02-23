@@ -11,7 +11,6 @@
       background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: Arial, sans-serif;
@@ -20,20 +19,20 @@
 
     #gameInfo {
       position: absolute;
-      top: 20px;
-      width: 90%;
-      max-width: 820px;
+      top: 18px;
+      width: 92%;
+      max-width: 920px;
       display: flex;
       justify-content: space-between;
       gap: 10px;
       background: rgba(255, 255, 255, 0.15);
-      padding: 14px 22px;
-      border-radius: 20px;
+      padding: 14px 20px;
+      border-radius: 18px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.18);
       color: #e0f7fa;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
       z-index: 10;
       flex-wrap: wrap;
@@ -48,7 +47,6 @@
       touch-action: none;
     }
 
-    /* 对话框 */
     #dialogBox {
       position: absolute;
       bottom: 38px;
@@ -59,7 +57,7 @@
       padding: 14px 22px;
       border-radius: 20px;
       font-size: 16px;
-      max-width: min(820px, 78%);
+      max-width: min(920px, 80%);
       text-align: center;
       display: none;
       backdrop-filter: blur(6px);
@@ -75,41 +73,41 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(30, 30, 50, 0.9);
-      padding: 40px;
-      border-radius: 25px;
+      padding: 38px;
+      border-radius: 22px;
       text-align: center;
       display: none;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(15px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       z-index: 100;
-      min-width: 340px;
+      min-width: 360px;
     }
 
     #gameOverPanel h2 {
       color: #e0f7fa;
-      font-size: 30px;
+      font-size: 26px;
       margin-bottom: 10px;
       text-shadow: 0 0 10px rgba(0, 200, 255, 0.7);
       line-height: 1.25;
     }
 
     #gameOverPanel .subtitle {
-      color: rgba(224, 247, 250, 0.8);
-      font-size: 14px;
+      color: rgba(224, 247, 250, 0.78);
+      font-size: 13px;
       margin-bottom: 18px;
       letter-spacing: 0.2px;
     }
 
     #gameOverPanel p {
       color: #bbdefb;
-      font-size: 18px;
-      margin: 10px 0;
+      font-size: 17px;
+      margin: 9px 0;
     }
 
     #restartBtn {
-      margin-top: 22px;
-      padding: 14px 38px;
+      margin-top: 20px;
+      padding: 14px 36px;
       font-size: 16px;
       background: linear-gradient(45deg, #00c9ff, #92fe9d);
       color: #0a1929;
@@ -137,12 +135,10 @@
   </div>
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-  <!-- 对话框 -->
   <div id="dialogBox"></div>
 
   <div id="gameOverPanel">
-    <h2>职场模拟器：本轮历练结束</h2>
+    <h2>本轮历练结束</h2>
     <div class="subtitle">Corporate Ascension Simulator — From Intern to Multiverse CEO</div>
     <p>最终得分: <span id="finalScore">0</span></p>
     <p>金币积分: <span id="finalCoins">0</span></p>
@@ -157,20 +153,40 @@
     const restartBtn = document.getElementById('restartBtn');
     const dialogBox = document.getElementById('dialogBox');
 
-    // ====== 核心资源：寿命(不可恢复) + HP(可恢复) ======
+    // ===== 基础参数 =====
     const INITIAL_DAYS = 21346;
     const MAX_HP = 100;
 
-    const DAYS_DECAY_PER_SEC = 1;   // 每秒寿命 -1 天（想更残酷就改成2）
-    const SMALL_DAMAGE = 8;         // 小怪贴脸扣血
-    const BOSS_DAMAGE = 18;         // Boss贴脸扣血
+    // 敌人伤害（碰撞一次）
+    const SMALL_DAMAGE = 8;
+    const BOSS_DAMAGE = 18;
 
-    const SMALL_HEAL = 12;          // 打小怪回血
-    const BOSS_HEAL = 35;           // 打Boss回血
+    // 生命回复（击杀）
+    const SMALL_HEAL = 10;
+    const BOSS_HEAL = 28;
 
-    const SMALL_COIN = 1;
-    const BOSS_COIN = 5;
+    // 金币成长：指数级（随难度增长）
+    function coinRewardSmall(difficulty) {
+      // 早期接近 1~2，后期指数上去
+      return Math.max(1, Math.floor(1.15 ** (difficulty - 1)));
+    }
+    function coinRewardBoss(difficulty) {
+      return Math.max(3, Math.floor(4 * (1.15 ** (difficulty - 1))));
+    }
 
+    // 寿命减少：指数级（随时间指数加速）
+    // 表示沉浸职场、时光飞逝。做了上限，避免直接“秒杀”。
+    function daysDecayPerSecond(secondsSurvived) {
+      // 初期很慢：~0.2 天/秒，后期指数飙升
+      const base = 0.2;
+      const growth = Math.pow(1.018, secondsSurvived); // 越久越快
+      const rate = base * growth;
+      return Math.min(rate, 120); // 上限：每秒最多扣 120 天（可调）
+    }
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    // ===== 游戏状态 =====
     let player = {
       x: canvas.width / 2,
       y: canvas.height / 2,
@@ -178,298 +194,96 @@
       speed: 5,
       targetX: canvas.width / 2,
       targetY: canvas.height / 2,
-      // 表情状态：calm | tired | critical | happy
-      mood: "calm",
-      happyUntil: 0
+
+      // 表情系统
+      mood: "calm",       // calm | tired | critical | happy
+      happyUntil: 0,
+
+      // 可爱小表情：眨眼 + 表情周期
+      blinkUntil: 0,
+      nextBlinkAt: 0
     };
 
     let enemies = [];
     let particles = [];
-    let coins = [];       // 仅视觉金币粒子
-    let floatTexts = [];  // 浮动文字
+    let coins = [];        // 视觉金币粒子
+    let floatTexts = [];   // 浮动文字
+    let milkBottles = [];  // 奶瓶粒子（工作输出）
 
-    let daysLeft = INITIAL_DAYS; // 倒计时：只会减少
-    let hp = MAX_HP;             // 可回复：生命值
+    let daysLeft = INITIAL_DAYS; // 倒计时：只减
+    let hp = MAX_HP;
     let score = 0;
     let coinScore = 0;
     let difficulty = 1;
     let gameRunning = true;
 
-    // 用于“每秒扣寿命”
     let lastSecondTick = performance.now();
     let secondsSurvived = 0;
 
-    // ====== 台词系统（早/中/后）======
+    // ===== 台词系统 =====
     const earlyLines = [
       "第一天上班……为什么空气都这么压抑。",
       "我是不是选错专业了？",
       "再坚持一下……也许明年会涨薪。",
-      "为什么他们都跑得比我快？",
-      "这任务真的合理吗？",
       "今天又要加班吗？",
       "好累……但不敢停。",
-      "别人好像都很厉害。",
-      "是不是只有我不会？",
       "先活下来再说。",
-      "老板看我一眼，我血压就上来了。",
-      "努力是不是一定有用？",
-      "我只是想按时下班。",
       "怎么又改需求？",
       "我只是个实习生啊……",
-      "我能不能……先喝口水再崩溃。",
-      "会议像黑洞：吞噬时间，吐出KPI。",
-      "我在工位上学会了瞬移：从周一瞬到周五。"
+      "会议像黑洞：吞噬时间，吐出KPI。"
     ];
 
     const midLines = [
-      "原来规则不是写给我这种人的。",
-      "我开始看懂他们的逻辑了。",
       "原来权力，是结构。",
       "原来不是我不行，是游戏有问题。",
       "我不再焦虑，我开始计算。",
-      "他们怕的不是我努力，是我清醒。",
       "资源流向强者。",
       "我开始收集变量。",
-      "情绪是成本。",
       "耐心，是我的武器。",
-      "我已经不一样了。",
-      "再等一会儿。",
-      "今天我不反驳，我只记录。",
-      "当我不再解释，我就开始赢。",
-      "我把加班当训练：练的是心硬。"
+      "当我不再解释，我就开始赢。"
     ];
 
-    // 你给的“后期爽文系统台词”（轻微排版润色）
     const lateLines = [
-      "五年前，我在底层挨耳光；五年后，我坐在董事办公室——这一巴掌，利息十亿。",
-      "年会抽中了特等奖：总裁体验卡（永久）。",
+      "五年前，我在底层挨耳光；五年后，我坐在董事办公室。利息，十亿。",
+      "年会特等奖：总裁体验卡（永久）。",
       "【恭喜宿主完成十万次摸鱼签到，奖励：整个集团控股权】",
       "带薪拉屎的我，拉出一座商业帝国。",
       "这栋楼太小，本座的目标是收购因果律。",
       "本座之言，便是群公告；本座之怒，便是服务器崩溃！",
-      "曾经我为PPT动画加班秃头，如今我的PPT自带天道威压，投资人看了当场打款十个亿！",
       "我即天道，我即规则，我即职场本身！",
       "签到一百年，我成了职场天道。",
-      "我有一剑，可斩星辰；我有一键，可让全楼断电！",
-      "被裁员那天，我绑定了职场神豪系统。",
-      "天若阻我，我便不出门；地若拦我，我便收购这地！"
+      "我有一键，可让全楼断电！",
+      "被裁员那天，我绑定了职场神豪系统。"
     ];
 
-    // 对话频率控制
     let lastDialogTime = 0;
-    const DIALOG_MIN_INTERVAL_MS = 8000; // 至少 8 秒一次
-    const DIALOG_SHOW_MS = 3200;         // 显示时长
+    const DIALOG_MIN_INTERVAL_MS = 8000;
+    const DIALOG_SHOW_MS = 3200;
     let dialogHideTimer = null;
 
     function showDialog(text) {
-      // 清理旧计时器，避免重叠
-      if (dialogHideTimer) {
-        clearTimeout(dialogHideTimer);
-        dialogHideTimer = null;
-      }
+      if (dialogHideTimer) { clearTimeout(dialogHideTimer); dialogHideTimer = null; }
       dialogBox.textContent = text;
       dialogBox.style.display = "block";
-      dialogHideTimer = setTimeout(() => {
-        dialogBox.style.display = "none";
-      }, DIALOG_SHOW_MS);
+      dialogHideTimer = setTimeout(() => { dialogBox.style.display = "none"; }, DIALOG_SHOW_MS);
     }
+    function randomLine(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    function randomLine(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    // 触发规则：按生存时间分段（你可以改成按difficulty/score）
     function updateDialog() {
       const now = performance.now();
       if (now - lastDialogTime < DIALOG_MIN_INTERVAL_MS) return;
 
-      // 一点“概率”，避免太密集：早期更常见，后期稍微稀一点更像“天道发言”
       const chance = secondsSurvived < 60 ? 0.75 : (secondsSurvived < 180 ? 0.6 : 0.45);
       if (Math.random() > chance) return;
 
-      if (secondsSurvived < 60) {
-        showDialog(randomLine(earlyLines));
-      } else if (secondsSurvived < 180) {
-        showDialog(randomLine(midLines));
-      } else {
-        showDialog(randomLine(lateLines));
-      }
+      if (secondsSurvived < 60) showDialog(randomLine(earlyLines));
+      else if (secondsSurvived < 180) showDialog(randomLine(midLines));
+      else showDialog(randomLine(lateLines));
 
       lastDialogTime = now;
     }
 
-    // ====== 绘制：奶牛（带表情）======
-    function drawCow(x, y, size, mood) {
-      // 身体
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(x, y, size, size * 0.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 斑点
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.ellipse(x - size * 0.3, y - size * 0.2, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(x + size * 0.2, y + size * 0.3, size * 0.2, size * 0.15, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 头部
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(x, y - size * 0.7, size * 0.7, size * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 眼睛：疲惫/濒危更“眯”
-      ctx.fillStyle = '#000000';
-      const eyeW = size * 0.08;
-      const eyeH =
-        mood === "critical" ? size * 0.025 :
-        mood === "tired" ? size * 0.035 :
-        size * 0.05;
-      const eyeY = y - size * 0.8;
-
-      ctx.beginPath();
-      ctx.ellipse(x - size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 眼袋
-      if (mood === "tired" || mood === "critical") {
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x - size * 0.3, eyeY + size * 0.08, size * 0.08, 0, Math.PI);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x + size * 0.3, eyeY + size * 0.08, size * 0.08, 0, Math.PI);
-        ctx.stroke();
-      }
-
-      // 嘴巴：happy 微笑 / tired 平直 / critical 苦脸
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      if (mood === "happy") {
-        ctx.arc(x, y - size * 0.62, size * 0.22, 0, Math.PI);
-      } else if (mood === "critical") {
-        ctx.arc(x, y - size * 0.52, size * 0.20, Math.PI, Math.PI * 2);
-      } else if (mood === "tired") {
-        ctx.moveTo(x - size * 0.22, y - size * 0.58);
-        ctx.lineTo(x + size * 0.22, y - size * 0.58);
-      } else {
-        ctx.arc(x, y - size * 0.60, size * 0.18, 0, Math.PI);
-      }
-      ctx.stroke();
-
-      // 耳朵
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(x - size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(x + size * 0.5, y - size * 0.9, size * 0.2, size * 0.3, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 角
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x - size * 0.2, y - size * 1.1);
-      ctx.lineTo(x - size * 0.15, y - size * 1.3);
-      ctx.moveTo(x + size * 0.2, y - size * 1.1);
-      ctx.lineTo(x + size * 0.15, y - size * 1.3);
-      ctx.stroke();
-    }
-
-    // 小马敌人
-    function drawHorse(x, y, size) {
-      ctx.fillStyle = '#8B4513';
-      ctx.beginPath();
-      ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(x, y - size * 0.6, size * 0.5, size * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#654321';
-      ctx.beginPath();
-      ctx.ellipse(x, y - size * 0.8, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.ellipse(x - size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(x + size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = '#8B4513';
-      ctx.lineWidth = size * 0.15;
-      ctx.beginPath();
-      ctx.moveTo(x - size * 0.3, y + size * 0.3);
-      ctx.lineTo(x - size * 0.3, y + size * 0.8);
-      ctx.moveTo(x + size * 0.3, y + size * 0.3);
-      ctx.lineTo(x + size * 0.3, y + size * 0.8);
-      ctx.stroke();
-    }
-
-    // Boss
-    function drawBoss(x, y, size) {
-      ctx.fillStyle = '#FF6B6B';
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#FF0000';
-      ctx.beginPath();
-      ctx.ellipse(x - size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, -0.3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(x + size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, 0.3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = '#8B0000';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x - size * 0.6, y - size * 0.4);
-      ctx.lineTo(x - size * 0.2, y - size * 0.3);
-      ctx.moveTo(x + size * 0.6, y - size * 0.4);
-      ctx.lineTo(x + size * 0.2, y - size * 0.3);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#8B0000';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y + size * 0.2, size * 0.3, 0, Math.PI);
-      ctx.stroke();
-    }
-
-    // 金币（视觉）
-    function drawCoin(x, y, size) {
-      ctx.fillStyle = '#FFD700';
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#FFA500';
-      ctx.beginPath();
-      ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#FFD700';
-      ctx.font = `bold ${size}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('¥', x, y);
-    }
-
-    // 粒子
+    // ===== 粒子 / 浮字 =====
     function createParticles(x, y, color, count) {
       for (let i = 0; i < count; i++) {
         particles.push({
@@ -483,7 +297,6 @@
       }
     }
 
-    // 视觉金币喷射
     function createCoins(x, y, n = 5) {
       for (let i = 0; i < n; i++) {
         coins.push({
@@ -496,7 +309,6 @@
       }
     }
 
-    // 浮动文字
     function addFloatText(x, y, text, color = "#e0f7fa") {
       floatTexts.push({
         x, y,
@@ -547,6 +359,24 @@
       ctx.globalAlpha = 1;
     }
 
+    function drawCoin(x, y, size) {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFA500';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${size}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('¥', x, y);
+    }
+
     function drawCoins() {
       coins.forEach(c => {
         ctx.globalAlpha = c.life;
@@ -567,7 +397,261 @@
       ctx.globalAlpha = 1;
     }
 
-    // 生成敌人
+    // ===== 奶瓶：不停“挤奶输出”，慢慢依次消失 =====
+    function createMilkBottleNearPlayer() {
+      // 多瓶：看起来像“持续产出”
+      const batch = 2 + Math.floor(Math.random() * 4); // 2~5
+      for (let i = 0; i < batch; i++) {
+        milkBottles.push({
+          x: player.x + (Math.random() - 0.5) * 60,
+          y: player.y + (Math.random() - 0.5) * 40,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: -0.5 - Math.random() * 1.4,
+          size: 10 + Math.random() * 6,
+          life: 1
+        });
+      }
+    }
+
+    function updateMilkBottles() {
+      milkBottles = milkBottles.filter(b => {
+        b.x += b.vx;
+        b.y += b.vy;
+        b.life -= 0.015; // 慢慢消失
+        return b.life > 0;
+      });
+    }
+
+    function drawMilkBottle(x, y, size, alpha) {
+      ctx.globalAlpha = alpha;
+
+      // 瓶身
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.beginPath();
+      ctx.roundRect(x - size * 0.22, y - size * 0.45, size * 0.44, size * 0.9, size * 0.18);
+      ctx.fill();
+
+      // 奶液
+      ctx.fillStyle = "rgba(180, 240, 255, 0.75)";
+      ctx.beginPath();
+      ctx.roundRect(x - size * 0.18, y - size * 0.1, size * 0.36, size * 0.48, size * 0.12);
+      ctx.fill();
+
+      // 瓶口
+      ctx.fillStyle = "rgba(120, 210, 255, 0.9)";
+      ctx.beginPath();
+      ctx.roundRect(x - size * 0.14, y - size * 0.56, size * 0.28, size * 0.14, size * 0.08);
+      ctx.fill();
+
+      ctx.globalAlpha = 1;
+    }
+
+    function drawMilkBottles() {
+      milkBottles.forEach(b => drawMilkBottle(b.x, b.y, b.size, b.life));
+    }
+
+    // ===== 可爱表情：眨眼 + mood + 瞬时开心 =====
+    function maybeBlink() {
+      const now = performance.now();
+      if (player.nextBlinkAt === 0) {
+        player.nextBlinkAt = now + 900 + Math.random() * 2200;
+      }
+      if (now >= player.nextBlinkAt) {
+        player.blinkUntil = now + (90 + Math.random() * 80);
+        player.nextBlinkAt = now + 900 + Math.random() * 2200;
+      }
+    }
+
+    function updateMood() {
+      const now = performance.now();
+
+      if (now < player.happyUntil) {
+        player.mood = "happy";
+        return;
+      }
+      const hpRatio = hp / MAX_HP;
+      if (hp <= 18) player.mood = "critical";
+      else if (hpRatio < 0.45 || difficulty >= 6) player.mood = "tired";
+      else player.mood = "calm";
+    }
+
+    // ===== 绘制奶牛（更明显的表情变化）=====
+    function drawCow(x, y, size, mood) {
+      const now = performance.now();
+      const isBlink = now < player.blinkUntil;
+
+      // 身体
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size, size * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 斑点
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.3, y - size * 0.2, size * 0.15, size * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y + size * 0.3, size * 0.2, size * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 头
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.7, size * 0.72, size * 0.62, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // cheeks（开心时小红晕）
+      if (mood === "happy") {
+        ctx.fillStyle = "rgba(255, 140, 160, 0.45)";
+        ctx.beginPath();
+        ctx.arc(x - size * 0.42, y - size * 0.62, size * 0.11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + size * 0.42, y - size * 0.62, size * 0.11, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 眼睛（眨眼更明显）
+      const eyeY = y - size * 0.8;
+      const eyeW = size * 0.09;
+
+      let eyeH =
+        mood === "critical" ? size * 0.025 :
+        mood === "tired" ? size * 0.035 :
+        size * 0.055;
+
+      if (isBlink) eyeH = size * 0.012;
+
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.3, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 眼袋（疲惫/濒危）
+      if (mood === "tired" || mood === "critical") {
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x - size * 0.3, eyeY + size * 0.09, size * 0.09, 0, Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + size * 0.3, eyeY + size * 0.09, size * 0.09, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      // 嘴巴：更夸张一点，便于观察变化
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      if (mood === "happy") {
+        ctx.arc(x, y - size * 0.63, size * 0.26, 0, Math.PI);
+      } else if (mood === "critical") {
+        ctx.arc(x, y - size * 0.50, size * 0.24, Math.PI, Math.PI * 2);
+      } else if (mood === "tired") {
+        ctx.moveTo(x - size * 0.26, y - size * 0.58);
+        ctx.lineTo(x + size * 0.26, y - size * 0.58);
+      } else {
+        ctx.arc(x, y - size * 0.61, size * 0.20, 0, Math.PI);
+      }
+      ctx.stroke();
+
+      // 耳朵
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.52, y - size * 0.9, size * 0.2, size * 0.32, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.52, y - size * 0.9, size * 0.2, size * 0.32, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 角
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.2, y - size * 1.1);
+      ctx.lineTo(x - size * 0.15, y - size * 1.32);
+      ctx.moveTo(x + size * 0.2, y - size * 1.1);
+      ctx.lineTo(x + size * 0.15, y - size * 1.32);
+      ctx.stroke();
+    }
+
+    // ===== 敌人绘制 =====
+    function drawHorse(x, y, size) {
+      ctx.fillStyle = '#8B4513';
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.6, size * 0.5, size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#654321';
+      ctx.beginPath();
+      ctx.ellipse(x, y - size * 0.8, size * 0.6, size * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.2, y - size * 0.7, size * 0.06, size * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#8B4513';
+      ctx.lineWidth = size * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.3, y + size * 0.3);
+      ctx.lineTo(x - size * 0.3, y + size * 0.8);
+      ctx.moveTo(x + size * 0.3, y + size * 0.3);
+      ctx.lineTo(x + size * 0.3, y + size * 0.8);
+      ctx.stroke();
+    }
+
+    function drawBoss(x, y, size) {
+      ctx.fillStyle = '#FF6B6B';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.4, y - size * 0.2, size * 0.15, size * 0.2, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#8B0000';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.6, y - size * 0.4);
+      ctx.lineTo(x - size * 0.2, y - size * 0.3);
+      ctx.moveTo(x + size * 0.6, y - size * 0.4);
+      ctx.lineTo(x + size * 0.2, y - size * 0.3);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#8B0000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y + size * 0.2, size * 0.3, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    // ===== 敌人行为：部分追你，部分乱走，部分远离你 =====
+    // type: "seek" | "wander" | "avoid"
+    function randomEnemyType() {
+      const r = Math.random();
+      if (r < 0.55) return "seek";     // 55% 追
+      if (r < 0.80) return "wander";   // 25% 自由移动
+      return "avoid";                  // 20% 远离你
+    }
+
     function spawnEnemy() {
       const side = Math.floor(Math.random() * 4);
       let x, y;
@@ -579,90 +663,131 @@
       }
 
       const isBoss = Math.random() < 0.1;
+      const type = randomEnemyType();
+
+      const baseSpeed = isBoss ? 2 : 3 + difficulty * 0.5;
+
       enemies.push({
         x, y,
         size: isBoss ? 40 : 25,
-        speed: isBoss ? 2 : 3 + difficulty * 0.5,
+        speed: baseSpeed,
         isBoss,
-        hp: isBoss ? 3 : 1
+        hp: isBoss ? 3 : 1,
+        type,
+
+        // wander 的随机速度
+        vx: (Math.random() - 0.5) * baseSpeed,
+        vy: (Math.random() - 0.5) * baseSpeed,
+
+        // avoid 会“轻微转向”，让它看起来像在逃
+        jitter: Math.random() * 0.8 + 0.2
       });
     }
 
-    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-
-    // 表情逻辑：低HP/高难度 => tired/critical；击杀短暂 happy
-    function updateMood() {
-      const now = performance.now();
-      if (now < player.happyUntil) {
-        player.mood = "happy";
-        return;
-      }
-      const hpRatio = hp / MAX_HP;
-      if (hp <= 18) player.mood = "critical";
-      else if (hpRatio < 0.45 || difficulty >= 6) player.mood = "tired";
-      else player.mood = "calm";
-    }
-
+    // ===== 击杀奖励（指数金币 + 表情开心）=====
     function rewardForKill(isBoss, x, y) {
-      if (isBoss) {
-        hp = clamp(hp + BOSS_HEAL, 0, MAX_HP);
-        score += 100;
-        coinScore += BOSS_COIN;
+      // 指数金币
+      const c = isBoss ? coinRewardBoss(difficulty) : coinRewardSmall(difficulty);
+      coinScore += c;
 
-        createParticles(x, y, '#FFD700', 30);
-        createCoins(x, y, 8);
-        addFloatText(x, y - 10, `+${BOSS_HEAL} HP`, "#92fe9d");
-        addFloatText(x, y + 12, `+${BOSS_COIN} 金币`, "#FFD700");
-      } else {
-        hp = clamp(hp + SMALL_HEAL, 0, MAX_HP);
-        score += 10;
-        coinScore += SMALL_COIN;
+      // 分数也随难度略成长（不是必须，但更爽）
+      const baseScore = isBoss ? 110 : 12;
+      score += Math.floor(baseScore * (1.08 ** (difficulty - 1)));
 
-        createParticles(x, y, '#00FF88', 20);
-        createCoins(x, y, 4);
-        addFloatText(x, y - 10, `+${SMALL_HEAL} HP`, "#92fe9d");
-        addFloatText(x, y + 12, `+${SMALL_COIN} 金币`, "#FFD700");
-      }
+      // HP恢复
+      const heal = isBoss ? BOSS_HEAL : SMALL_HEAL;
+      hp = clamp(hp + heal, 0, MAX_HP);
 
-      // 开心表情 0.8s
-      player.happyUntil = performance.now() + 800;
+      // 视觉与提示
+      createParticles(x, y, isBoss ? '#FFD700' : '#00FF88', isBoss ? 34 : 22);
+      createCoins(x, y, isBoss ? 9 : 5);
+      addFloatText(x, y - 10, `+${heal} HP`, "#92fe9d");
+      addFloatText(x, y + 12, `+${c} 金币`, "#FFD700");
+
+      // 开心表情持续更久一点，便于看到变化
+      player.happyUntil = performance.now() + 1200;
     }
 
-    // 更新游戏
+    // ===== 更新游戏 =====
     function update() {
       if (!gameRunning) return;
 
-      // 1) 寿命倒计时（不可恢复）
+      // 1) 每秒扣寿命（指数加速）
       const now = performance.now();
-      if (now - lastSecondTick >= 1000) {
-        const secs = Math.floor((now - lastSecondTick) / 1000);
-        daysLeft -= secs * DAYS_DECAY_PER_SEC;
-        secondsSurvived += secs;
+      const deltaMs = now - lastSecondTick;
+      if (deltaMs >= 1000) {
+        const secs = Math.floor(deltaMs / 1000);
+        for (let i = 0; i < secs; i++) {
+          const rate = daysDecayPerSecond(secondsSurvived);
+          daysLeft -= rate;
+          secondsSurvived += 1;
+        }
         lastSecondTick += secs * 1000;
       }
-      if (daysLeft < 0) daysLeft = 0;
+      daysLeft = Math.max(0, daysLeft);
 
-      // 2) 更新玩家位置
+      // 2) 玩家移动
       const dx = player.targetX - player.x;
       const dy = player.targetY - player.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > 5) {
-        player.x += (dx / distance) * player.speed;
-        player.y += (dy / distance) * player.speed;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 5) {
+        player.x += (dx / dist) * player.speed;
+        player.y += (dy / dist) * player.speed;
       }
 
-      // 3) 更新敌人追击 + 碰撞
+      // 3) 奶瓶持续产出：只要在游戏中就不断出现
+      // 让它“很多”：概率高 + 批量生成
+      if (Math.random() < 0.72) {
+        createMilkBottleNearPlayer();
+      }
+
+      // 4) 敌人更新：按行为类型移动 + 碰撞
       enemies.forEach((enemy, index) => {
-        const dx = player.x - enemy.x;
-        const dy = player.y - enemy.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // 行为向量
+        let vx = 0, vy = 0;
 
-        enemy.x += (dx / distance) * enemy.speed;
-        enemy.y += (dy / distance) * enemy.speed;
+        if (enemy.type === "seek") {
+          const dx = player.x - enemy.x;
+          const dy = player.y - enemy.y;
+          const d = Math.sqrt(dx * dx + dy * dy) || 1;
+          vx = (dx / d) * enemy.speed;
+          vy = (dy / d) * enemy.speed;
+        } else if (enemy.type === "avoid") {
+          // 远离主角（带点抖动转向）
+          const dx = enemy.x - player.x;
+          const dy = enemy.y - player.y;
+          const d = Math.sqrt(dx * dx + dy * dy) || 1;
+          vx = (dx / d) * enemy.speed * enemy.jitter;
+          vy = (dy / d) * enemy.speed * enemy.jitter;
+        } else { // wander
+          // 随机游走：轻微噪声 + 速度保持
+          enemy.vx += (Math.random() - 0.5) * 0.3;
+          enemy.vy += (Math.random() - 0.5) * 0.3;
 
-        // 碰撞：扣HP；击杀回血
-        if (distance < player.size + enemy.size) {
+          const v = Math.sqrt(enemy.vx * enemy.vx + enemy.vy * enemy.vy) || 1;
+          const maxV = enemy.speed * 0.9;
+          enemy.vx = (enemy.vx / v) * Math.min(v, maxV);
+          enemy.vy = (enemy.vy / v) * Math.min(v, maxV);
+
+          vx = enemy.vx;
+          vy = enemy.vy;
+        }
+
+        enemy.x += vx;
+        enemy.y += vy;
+
+        // 边界反弹（让 wander / avoid 不会跑没）
+        if (enemy.x < -60) enemy.x = canvas.width + 60;
+        if (enemy.x > canvas.width + 60) enemy.x = -60;
+        if (enemy.y < -60) enemy.y = canvas.height + 60;
+        if (enemy.y > canvas.height + 60) enemy.y = -60;
+
+        // 碰撞检测
+        const cx = player.x - enemy.x;
+        const cy = player.y - enemy.y;
+        const cd = Math.sqrt(cx * cx + cy * cy);
+
+        if (cd < player.size + enemy.size) {
           hp -= enemy.isBoss ? BOSS_DAMAGE : SMALL_DAMAGE;
           hp = clamp(hp, 0, MAX_HP);
 
@@ -679,49 +804,53 @@
         }
       });
 
-      // 4) 难度
-      difficulty = Math.floor(score / 100) + 1;
+      // 5) 难度：分数越高越难（你也可以改用 secondsSurvived）
+      difficulty = Math.floor(score / 120) + 1;
 
-      // 5) 生成新敌人
-      if (Math.random() < Math.min(0.18, 0.02 * difficulty)) {
-        spawnEnemy();
-      }
+      // 6) 刷怪：随难度更密集，但有上限
+      const spawnChance = Math.min(0.20, 0.02 * difficulty);
+      if (Math.random() < spawnChance) spawnEnemy();
 
-      // 6) 粒子/金币/浮字更新
+      // 7) 更新所有粒子
       updateParticles();
       updateCoins();
       updateFloatTexts();
+      updateMilkBottles();
+
+      // 8) 表情：眨眼 + mood
+      maybeBlink();
       updateMood();
 
-      // 7) 台词系统更新（放在UI前后都行）
+      // 9) 台词
       updateDialog();
 
-      // 8) 更新UI
+      // 10) UI
       document.getElementById('daysLeft').textContent = Math.floor(daysLeft);
       document.getElementById('hp').textContent = Math.floor(hp);
       document.getElementById('difficulty').textContent = difficulty;
       document.getElementById('coinScore').textContent = coinScore;
 
-      // 9) 游戏结束：寿命归零 或 HP归零
-      if (daysLeft <= 0 || hp <= 0) {
-        gameOver();
-      }
+      // 11) 结束条件：寿命归零 或 HP归零
+      if (daysLeft <= 0 || hp <= 0) gameOver();
     }
 
-    // 绘制游戏
+    // ===== 绘制 =====
     function draw() {
+      // 背景残影
       ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 流汗：HP低/疲惫时更明显
-      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.35) {
+      // 奶瓶先画（在牛周围飘）
+      drawMilkBottles();
+
+      // 玩家：流汗（疲惫/濒危更明显）
+      if ((player.mood === "tired" || player.mood === "critical") && Math.random() < 0.38) {
         ctx.fillStyle = '#87CEEB';
         ctx.beginPath();
-        ctx.arc(player.x - player.size * 0.8, player.y - player.size * 0.5, 3, 0, Math.PI * 2);
+        ctx.arc(player.x - player.size * 0.85, player.y - player.size * 0.55, 3, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 玩家
       drawCow(player.x, player.y, player.size, player.mood);
 
       // 敌人
@@ -730,20 +859,17 @@
         else drawHorse(enemy.x, enemy.y, enemy.size);
       });
 
-      // 视觉效果
       drawParticles();
       drawCoins();
       drawFloatTexts();
     }
 
-    // 游戏循环
     function gameLoop() {
       update();
       draw();
       requestAnimationFrame(gameLoop);
     }
 
-    // 游戏结束
     function gameOver() {
       gameRunning = false;
       document.getElementById('finalScore').textContent = score;
@@ -752,34 +878,35 @@
       gameOverPanel.style.display = 'block';
     }
 
-    // 重新开始
     function restart() {
       player.x = canvas.width / 2;
       player.y = canvas.height / 2;
       player.targetX = canvas.width / 2;
       player.targetY = canvas.height / 2;
+
       player.mood = "calm";
       player.happyUntil = 0;
+      player.blinkUntil = 0;
+      player.nextBlinkAt = 0;
 
       enemies = [];
       particles = [];
       coins = [];
       floatTexts = [];
+      milkBottles = [];
 
       daysLeft = INITIAL_DAYS;
       hp = MAX_HP;
       score = 0;
       coinScore = 0;
       difficulty = 1;
-      secondsSurvived = 0;
 
+      secondsSurvived = 0;
       lastSecondTick = performance.now();
+
       lastDialogTime = 0;
       dialogBox.style.display = "none";
-      if (dialogHideTimer) {
-        clearTimeout(dialogHideTimer);
-        dialogHideTimer = null;
-      }
+      if (dialogHideTimer) { clearTimeout(dialogHideTimer); dialogHideTimer = null; }
 
       gameRunning = true;
       gameOverPanel.style.display = 'none';
